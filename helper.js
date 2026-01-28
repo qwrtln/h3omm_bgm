@@ -1,3 +1,47 @@
+const FACTION_COLORS = {
+    'castle': '#73B7EB',
+    'rampart': '#228B22',
+    'tower': '#909090',
+    'inferno': '#B22222',
+    'dungeon': '#9370C5',
+    'necropolis': '#666666',
+    'fortress': '#556B2F',
+    'stronghold': '#A67C52',
+    'conflux': '#C158C1',
+    'cove': '#20B2AA',
+    'neutral': '#333333' // Default
+};
+
+const ASSET_QUEUE = [
+    // 1. Audio (Music & SFX)
+    'assets/main.mp3',
+    'assets/good.mp3', 'assets/evil.mp3', 'assets/neutral.mp3', 'assets/secret.mp3',
+    'assets/castle.mp3', 'assets/rampart.mp3', 'assets/tower.mp3',
+    'assets/inferno.mp3', 'assets/dungeon.mp3', 'assets/necropolis.mp3',
+    'assets/fortress.mp3', 'assets/stronghold.mp3',
+    'assets/conflux.mp3', 'assets/cove.mp3',
+    'assets/battle1.mp3', 'assets/battle2.mp3', 'assets/battle3.mp3', 'assets/battle4.mp3',
+    'assets/battle5.mp3', 'assets/battle6.mp3', 'assets/battle7.mp3', 'assets/battle8.mp3',
+    'assets/combat1.mp3', 'assets/combat2.mp3', 'assets/combat3.mp3', 'assets/combat4.mp3',
+    'assets/ai1.mp3', 'assets/ai2.mp3', 'assets/ai3.mp3',
+    'assets/chest.mp3', 'assets/treasure.mp3',
+    'assets/newday.mp3', 'assets/newweek.mp3', 'assets/newmonth.mp3',
+    'assets/win_battle.mp3', 
+    'assets/experience.mp3', 'assets/lose.mp3', 'assets/retreat.mp3',
+    'assets/win_game.mp3',
+
+    // 2. Images (AVIFs fetched after music starts loading)
+    'assets/good.avif', 'assets/evil.avif', 'assets/neutral.avif', 'assets/secret.avif',
+    'assets/castle.avif', 'assets/rampart.avif', 'assets/tower.avif',
+    'assets/inferno.avif', 'assets/dungeon.avif', 'assets/necropolis.avif',
+    'assets/fortress.avif', 'assets/stronghold.avif',
+    'assets/conflux.avif', 'assets/cove.avif',
+    'assets/newtime.avif',
+    'assets/start.avif', 'assets/resource.avif', 'assets/artifact.avif', 
+    'assets/end_turn.avif', 'assets/rules.avif', 'assets/win_game.avif',
+    'assets/victory.avif', 'assets/retreat.avif', 'assets/lose.avif'
+];
+
 const Game = {
     state: {
         currentScreen: 'screen-start',
@@ -7,46 +51,38 @@ const Game = {
         selectedTheme: null,
         playerCount: 3,
         lastBattleIdx: -1, 
-        lastCombatIdx: -1
+        lastCombatIdx: -1,
+        // Helper state for setup
+        tempPlayerName: ""
     },
 
     audio: {
-        // Two music channels for crossfading
         ch1: new Audio(),
         ch2: new Audio(),
-        activeChannel: 'ch1', // Tracks which is the 'intended' main track
-        
-        // SFX channel
+        activeChannel: 'ch1',
         sfx: new Audio(),
-        
-        // State
         currentBgUrl: null,
-        fadeInterval: null // SINGLE interval to manage all fades
+        fadeInterval: null
     },
 
-    // --- ROBUST AUDIO ENGINE ---
+    // --- AUDIO ENGINE ---
 
     playBg(url, fade = true) {
         const fullUrl = url.includes('/') ? url : `assets/${url}`;
-        
-        // If already playing this URL, do nothing
         if (this.audio.currentBgUrl === fullUrl) return;
 
-        // 1. KILL any running fade immediately
         if (this.audio.fadeInterval) {
             clearInterval(this.audio.fadeInterval);
             this.audio.fadeInterval = null;
         }
 
-        // 2. Identify Incoming vs Outgoing
         const outgoing = this.audio[this.audio.activeChannel];
         const nextChannelName = (this.audio.activeChannel === 'ch1') ? 'ch2' : 'ch1';
         const incoming = this.audio[nextChannelName];
 
-        // 3. Setup Incoming
         incoming.src = fullUrl;
         incoming.loop = true;
-        incoming.volume = 0; // Start silent
+        incoming.volume = 0; 
         this.audio.currentBgUrl = fullUrl;
         this.audio.activeChannel = nextChannelName;
 
@@ -54,42 +90,34 @@ const Game = {
         if (playPromise) playPromise.catch(e => console.error("Audio Play Err:", e));
 
         if (!fade) {
-            // Hard cut
             incoming.volume = 1;
             outgoing.pause();
             outgoing.volume = 0;
             outgoing.currentTime = 0;
         } else {
-            // 4. Start ONE Master Fade Interval
             this.audio.fadeInterval = setInterval(() => {
-                const step = 0.05; // Fade speed
+                const step = 0.05;
                 let isDone = true;
 
-                // Fade In Incoming
                 if (incoming.volume < 1) {
                     incoming.volume = Math.min(1, incoming.volume + step);
                     isDone = false;
                 }
-
-                // Fade Out Outgoing (from whatever volume it currently is)
                 if (outgoing.volume > 0) {
                     outgoing.volume = Math.max(0, outgoing.volume - step);
                     isDone = false;
                 }
-
-                // Cleanup when both targets reached
                 if (isDone) {
                     clearInterval(this.audio.fadeInterval);
                     this.audio.fadeInterval = null;
                     outgoing.pause();
                     outgoing.currentTime = 0;
                 }
-            }, 50); // 20 ticks per second
+            }, 50);
         }
     },
 
     stopBg() {
-        // 1. KILL any running fade immediately
         if (this.audio.fadeInterval) {
             clearInterval(this.audio.fadeInterval);
             this.audio.fadeInterval = null;
@@ -99,7 +127,6 @@ const Game = {
         const c1 = this.audio.ch1;
         const c2 = this.audio.ch2;
 
-        // Fade out WHOEVER is playing
         this.audio.fadeInterval = setInterval(() => {
             let activeVol = false;
             
@@ -122,8 +149,6 @@ const Game = {
     },
 
     resumeBg() {
-        // Just ensures the active channel is playing at full volume
-        // Useful after SFX interruptions if logic requires it
         const active = this.audio[this.audio.activeChannel];
         if (this.audio.currentBgUrl && active.paused) {
             active.volume = 1;
@@ -154,12 +179,42 @@ const Game = {
         });
     },
 
+    // --- PRELOADER ---
+    
+    initPreloader() {
+        let qIndex = 0;
+        const loadNext = () => {
+            if (qIndex >= ASSET_QUEUE.length) {
+                console.log("Preload Complete");
+                return;
+            }
+            const url = ASSET_QUEUE[qIndex];
+            qIndex++;
+            
+            fetch(url)
+                .then(r => r.blob())
+                .then(() => loadNext())
+                .catch(err => {
+                    console.log("Preload skip:", url);
+                    loadNext();
+                });
+        };
+        loadNext();
+    },
+
     // --- GAME LOGIC ---
 
     init() {
         document.getElementById('click-overlay').style.display = 'none';
         this.playBg('assets/main.mp3');
         this.showScreen('screen-start');
+        this.updateFactionColor('neutral');
+        this.initPreloader(); 
+    },
+
+    updateFactionColor(faction) {
+        const color = FACTION_COLORS[faction] || FACTION_COLORS['neutral'];
+        document.documentElement.style.setProperty('--faction-color', color);
     },
 
     selectTheme(theme) {
@@ -179,21 +234,39 @@ const Game = {
             this.showPreGame();
             return;
         }
-        document.getElementById('faction-player-title').innerText = `Player ${playerIndex + 1}`;
+        
+        // Setup state for this selection step
+        const defaultName = `Player ${playerIndex + 1}`;
+        this.state.tempPlayerName = defaultName;
+        document.getElementById('faction-player-title').innerText = defaultName;
+        
         this.showScreen('screen-factions');
         
         const buttons = document.querySelectorAll('.faction-btn');
         buttons.forEach(btn => {
             btn.onclick = () => {
                 const faction = btn.dataset.faction;
-                this.state.players.push({ id: playerIndex, faction: faction });
+                this.state.players.push({ 
+                    id: playerIndex, 
+                    faction: faction, 
+                    name: this.state.tempPlayerName 
+                });
                 this.startFactionSelection(playerIndex + 1);
             };
         });
     },
 
+    editName() {
+        const newName = prompt("Enter Player Name:", this.state.tempPlayerName);
+        if (newName && newName.trim() !== "") {
+            this.state.tempPlayerName = newName.trim();
+            document.getElementById('faction-player-title').innerText = this.state.tempPlayerName;
+        }
+    },
+
     showPreGame() {
         this.showScreen('screen-pregame');
+        this.updateFactionColor('neutral');
     },
 
     startGame() {
@@ -206,7 +279,11 @@ const Game = {
         const player = this.state.players[this.state.currentPlayerIndex];
         const factionMusic = this.getFactionMusic(player.faction);
         
-        document.getElementById('overworld-title').innerText = `Player ${this.state.currentPlayerIndex + 1}'s Turn`;
+        // Use custom name
+        document.getElementById('overworld-title').innerText = `${player.name}'s Turn`;
+        
+        // Update Border
+        this.updateFactionColor(player.faction);
 
         this.showScreen('screen-overworld');
         
@@ -215,7 +292,6 @@ const Game = {
         } else {
             if (musicDelay > 0) {
                 setTimeout(() => {
-                     // Check context: ensures we didn't leave overworld in that 1 second
                      if(this.state.currentScreen === 'screen-overworld') {
                          this.playBg(factionMusic);
                      }
@@ -254,19 +330,20 @@ const Game = {
             nextRound++;
             isSpecialEvent = true;
             
+            // Even rounds (2, 4...) are Month (Astrologers)
+            // Odd rounds (3, 5...) are Week (Resource)
             if (nextRound % 2 === 0) {
-                sfxToPlay = 'newweek.mp3';
-                overlayText = "Resource Round";
-            } else {
                 sfxToPlay = 'newmonth.mp3';
                 overlayText = "Astrologers Proclaim!";
+            } else {
+                sfxToPlay = 'newweek.mp3';
+                overlayText = "Resource Round";
             }
         }
 
         this.stopBg();
 
         if (isSpecialEvent) {
-            // BLOCKING Logic for Week/Month
             const ol = document.getElementById('event-overlay');
             document.getElementById('event-text').innerText = overlayText;
             ol.style.display = 'flex';
@@ -279,17 +356,14 @@ const Game = {
             });
 
         } else {
-            // PARALLEL Logic for New Day
             this.playSfx(sfxToPlay);
             this.state.currentPlayerIndex = nextIndex;
             this.state.round = nextRound;
-            // Delay music start by 1s
             this.startTurn(true, 1000); 
         }
     },
 
     handleResource() {
-        // Pause music hard
         this.audio.ch1.pause();
         this.audio.ch2.pause();
         this.playSfx('chest.mp3', () => this.resumeBg());
@@ -303,7 +377,8 @@ const Game = {
 
     startCombat() {
         this.stopBg();
-        document.getElementById('combat-title').innerText = `Player ${this.state.currentPlayerIndex + 1}'s Combat`;
+        // Use custom name
+        document.getElementById('combat-title').innerText = `${this.state.players[this.state.currentPlayerIndex].name}'s Combat`;
 
         let introNum;
         do {
@@ -327,35 +402,70 @@ const Game = {
         });
     },
 
+    // --- COMBAT RESULTS ---
     combatVictory() {
         this.stopBg();
+        this.showCombatOverlay("Victory", "assets/victory.avif");
+        
+        // Sequence: Battle Fanfare -> Experience Sound -> Return
         this.playSfx('win_battle.mp3', () => {
-            this.playSfx('experience.mp3', () => this.returnToOverworld());
+            this.playSfx('experience.mp3', () => {
+                this.hideCombatOverlay();
+                this.returnToOverworld();
+            });
         });
     },
 
     combatRetreat() {
         this.stopBg();
-        this.playSfx('retreat.mp3', () => this.returnToOverworld());
+        this.showCombatOverlay("Retreat", "assets/retreat.avif");
+        
+        this.playSfx('retreat.mp3', () => {
+            this.hideCombatOverlay();
+            this.returnToOverworld();
+        });
     },
 
     combatLose() {
         this.stopBg();
-        this.playSfx('lose.mp3', () => this.returnToOverworld());
+        this.showCombatOverlay("Defeat", "assets/lose.avif");
+        
+        this.playSfx('lose.mp3', () => {
+            this.hideCombatOverlay();
+            this.returnToOverworld();
+        });
+    },
+
+    // --- OVERLAY HELPERS ---
+
+    showCombatOverlay(text, bgImageUrl) {
+        // Update Title
+        document.getElementById('combat-title').innerText = text;
+        
+        // Update Overlay
+        const overlay = document.getElementById('combat-event-overlay');
+        overlay.style.backgroundImage = `url('${bgImageUrl}')`;
+        overlay.style.display = 'flex';
+        
+        // Update Overlay Text
+        document.getElementById('combat-event-text').innerText = text;
+    },
+
+    hideCombatOverlay() {
+        document.getElementById('combat-event-overlay').style.display = 'none';
     },
 
     returnToOverworld() {
+        this.hideCombatOverlay();
         this.startTurn(true); 
     },
 
     showRules(fromScreen) {
         this.state.previousScreen = fromScreen;
-        // Don't fade when going to rules, just switch
         this.state.previousMusic = this.audio.currentBgUrl;
         
         const aiNum = Math.floor(Math.random() * 3) + 1;
         let aiFile = `assets/ai${aiNum}.mp3`;
-        if (aiNum > 1) aiFile = `assets/ai${aiNum}.mp3`;
 
         this.playBg(aiFile);
         this.showScreen('screen-rules');
@@ -368,28 +478,44 @@ const Game = {
         }
     },
 
+    // Standard Win
     winGame() {
-        // Stop Everything hard
+        const playerName = this.state.players[this.state.currentPlayerIndex].name;
+        this.finishGameSequence('assets/win_game.avif', `${playerName}'s Victory!`, 'assets/win_game.mp3', true);
+    },
+
+    // New Lose Logic
+    loseGame() {
+        this.finishGameSequence('assets/lose.avif', 'Defeat', 'assets/lose.mp3', false);
+    },
+
+    finishGameSequence(imgUrl, titleText, audioUrl, loop) {
         if (this.audio.fadeInterval) clearInterval(this.audio.fadeInterval);
         this.audio.ch1.pause();
         this.audio.ch2.pause();
         this.audio.ch1.volume = 0; 
         this.audio.ch2.volume = 0;
         
-        // Setup Win Loop on active channel
-        const active = this.audio.ch1; 
-        this.audio.activeChannel = 'ch1';
-        
-        active.src = 'assets/win_game.mp3';
-        active.loop = true;
-        active.volume = 1;
-        active.play().catch(e => console.log("Win play err", e));
-        this.audio.currentBgUrl = 'assets/win_game.mp3';
+        this.updateFactionColor('neutral');
 
+        document.getElementById('endgame-title').innerText = titleText;
+        
         const winBtn = document.getElementById('win-theme-btn');
-        winBtn.style.backgroundImage = `url('assets/${this.state.selectedTheme}.avif')`;
+        winBtn.style.backgroundImage = `url('${imgUrl}')`;
 
         this.showScreen('screen-win');
+
+        if (loop) {
+            const active = this.audio.ch1; 
+            this.audio.activeChannel = 'ch1';
+            active.src = audioUrl;
+            active.loop = true;
+            active.volume = 1;
+            active.play().catch(e => console.log("Win play err", e));
+            this.audio.currentBgUrl = audioUrl;
+        } else {
+            this.playSfx(audioUrl.replace('assets/', ''));
+        }
     },
 
     resetGame() {
