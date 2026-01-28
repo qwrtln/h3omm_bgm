@@ -158,7 +158,7 @@ const Game = {
 
     init() {
         document.getElementById('click-overlay').style.display = 'none';
-        this.playBg('assets/main.MP3');
+        this.playBg('assets/main.mp3');
         this.showScreen('screen-start');
     },
 
@@ -229,10 +229,10 @@ const Game = {
     getFactionMusic(faction) {
         const map = {
             'castle': 'assets/castle.mp3',
-            'rampart': 'assets/rampart.MP3',
+            'rampart': 'assets/rampart.mp3',
             'tower': 'assets/tower.mp3',
             'inferno': 'assets/inferno.mp3',
-            'dungeon': 'assets/dungeon.MP3',
+            'dungeon': 'assets/dungeon.mp3',
             'necropolis': 'assets/necropolis.mp3',
             'fortress': 'assets/fortress.mp3',
             'stronghold': 'assets/stronghold.mp3',
@@ -318,7 +318,7 @@ const Game = {
         this.state.lastCombatIdx = combatNum;
 
         const introFile = `battle${introNum}.mp3`;
-        const combatFile = `assets/combat${combatNum}.MP3`;
+        const combatFile = `assets/combat${combatNum}.mp3`;
 
         this.showScreen('screen-combat');
 
@@ -355,7 +355,7 @@ const Game = {
         
         const aiNum = Math.floor(Math.random() * 3) + 1;
         let aiFile = `assets/ai${aiNum}.mp3`;
-        if (aiNum > 1) aiFile = `assets/ai${aiNum}.MP3`;
+        if (aiNum > 1) aiFile = `assets/ai${aiNum}.mp3`;
 
         this.playBg(aiFile);
         this.showScreen('screen-rules');
