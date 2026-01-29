@@ -157,25 +157,29 @@ const Game = {
     },
 
     playSfx(filename, onComplete = null) {
+        // 1. Stop any current SFX and wipe existing callbacks
+        this.audio.sfx.pause();
+        this.audio.sfx.onended = null;
+        this.audio.sfx.onerror = null;
+
         this.audio.sfx.src = `assets/${filename}`;
         this.audio.sfx.loop = false;
         this.audio.sfx.volume = 1;
         
-        const done = () => {
-            this.audio.sfx.removeEventListener('ended', done);
-            this.audio.sfx.removeEventListener('error', done);
-            if(onComplete) onComplete();
-        };
-
-        this.audio.sfx.addEventListener('ended', done);
-        this.audio.sfx.addEventListener('error', (e) => {
-            console.error(`SFX Error (${filename}):`, e);
-            done(); 
-        });
+        // 2. Set the callback if provided
+        if (onComplete) {
+            const handleDone = () => {
+                this.audio.sfx.onended = null;
+                this.audio.sfx.onerror = null;
+                onComplete();
+            };
+            this.audio.sfx.onended = handleDone;
+            this.audio.sfx.onerror = handleDone;
+        }
 
         this.audio.sfx.play().catch(e => {
             console.error(`SFX Play Blocked (${filename}):`, e);
-            done();
+            if(onComplete) onComplete();
         });
     },
 
@@ -352,14 +356,14 @@ const Game = {
                 document.getElementById('event-overlay').style.display = 'none';
                 this.state.currentPlayerIndex = nextIndex;
                 this.state.round = nextRound;
-                this.startTurn(true, 0); 
+                this.startTurn(true, 0);
             });
 
         } else {
             this.playSfx(sfxToPlay);
             this.state.currentPlayerIndex = nextIndex;
             this.state.round = nextRound;
-            this.startTurn(true, 1000); 
+            this.startTurn(true, 3000);
         }
     },
 
@@ -406,38 +410,22 @@ const Game = {
     combatVictory() {
         this.stopBg();
         this.showCombatOverlay("Victory", "assets/victory.avif");
-        
-        // Sequence: Battle Fanfare -> Experience Sound -> Return
-        this.playSfx('win_battle.mp3', () => {
-            this.playSfx('experience.mp3', () => {
-                this.hideCombatOverlay();
-                this.returnToOverworld();
-            });
-        });
+        this.playSfx('win_battle.mp3', () => this.returnToOverworld());
     },
 
     combatRetreat() {
         this.stopBg();
         this.showCombatOverlay("Retreat", "assets/retreat.avif");
-        
-        this.playSfx('retreat.mp3', () => {
-            this.hideCombatOverlay();
-            this.returnToOverworld();
-        });
+        this.playSfx('retreat.mp3', () => this.returnToOverworld());
     },
 
     combatLose() {
         this.stopBg();
         this.showCombatOverlay("Defeat", "assets/lose.avif");
-        
-        this.playSfx('lose.mp3', () => {
-            this.hideCombatOverlay();
-            this.returnToOverworld();
-        });
+        this.playSfx('lose.mp3', () => this.returnToOverworld());
     },
 
     // --- OVERLAY HELPERS ---
-
     showCombatOverlay(text, bgImageUrl) {
         // Update Title
         document.getElementById('combat-title').innerText = text;
@@ -456,6 +444,14 @@ const Game = {
     },
 
     returnToOverworld() {
+        // 1. Stop the SFX immediately
+        this.audio.sfx.pause();
+        this.audio.sfx.currentTime = 0;
+        this.audio.sfx.onended = null; // Prevent the original callback from firing
+
+        // 2. Prevent double-execution if already transitioning
+        if (this.state.currentScreen === 'screen-overworld') return;
+
         this.hideCombatOverlay();
         this.startTurn(true); 
     },

@@ -404,7 +404,7 @@
     <!-- Relative container for the blocking overlay -->
     <div style="position: relative;">
       <!-- Combat Event Overlay (Hidden by default) -->
-      <div id="combat-event-overlay" style="
+      <div id="combat-event-overlay" onclick="Game.returnToOverworld()" style="
         position: absolute;
         inset: -10px;
         background-color: rgba(0,0,0,0.8);
@@ -419,6 +419,7 @@
         justify-content: center;
         align-items: center;
         border: 2px solid var(--gold-color);
+        cursor: pointer; 
       ">
         <!-- Text inside the overlay if needed, currently using title change instead -->
         <div id="combat-event-text" style="
