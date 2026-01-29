@@ -12,6 +12,13 @@ const FACTION_COLORS = {
     'neutral': '#333333' // Default
 };
 
+const TERRAIN_TRACKS = [
+    'assets/dirt.mp3', 'assets/grass.mp3', 'assets/highlands.mp3', 
+    'assets/lava.mp3', 'assets/rough.mp3', 'assets/sand.mp3', 
+    'assets/snow.mp3', 'assets/swamp.mp3', 'assets/underground.mp3', 
+    'assets/wasteland.mp3', 'assets/water.mp3'
+];
+
 const ASSET_QUEUE = [
     // 1. Audio (Music & SFX)
     'assets/main.mp3',
@@ -30,13 +37,26 @@ const ASSET_QUEUE = [
     'assets/experience.mp3', 'assets/lose.mp3', 'assets/retreat.mp3',
     'assets/win_game.mp3',
 
+    // Terrain
+    `assets/dirt.mp3`,
+    `assets/grass.mp3`,
+    `assets/highlands.mp3`,
+    `assets/lava.mp3`,
+    `assets/rough.mp3`,
+    `assets/sand.mp3`,
+    `assets/snow.mp3`,
+    `assets/swamp.mp3`,
+    `assets/underground.mp3`,
+    `assets/wasteland.mp3`,
+    `assets/water.mp3`,
+
     // 2. Images (AVIFs fetched after music starts loading)
     'assets/good.avif', 'assets/evil.avif', 'assets/neutral.avif', 'assets/secret.avif',
     'assets/castle.avif', 'assets/rampart.avif', 'assets/tower.avif',
     'assets/inferno.avif', 'assets/dungeon.avif', 'assets/necropolis.avif',
     'assets/fortress.avif', 'assets/stronghold.avif',
     'assets/conflux.avif', 'assets/cove.avif',
-    'assets/newtime.avif',
+    'assets/newtime.avif','./assets/tile.avif',
     'assets/start.avif', 'assets/resource.avif', 'assets/artifact.avif', 
     'assets/end_turn.avif', 'assets/rules.avif', 'assets/win_game.avif',
     'assets/victory.avif', 'assets/retreat.avif', 'assets/lose.avif'
@@ -52,6 +72,9 @@ const Game = {
         playerCount: 3,
         lastBattleIdx: -1, 
         lastCombatIdx: -1,
+        overworldTheme: 'town', // 'town' or 'tile'
+        currentTerrainMusic: null, // Track the specific terrain for this turn
+        lastTerrainMusic: null,    // Track the previous turn's terrain to avoid repeats
         // Helper state for setup
         tempPlayerName: ""
     },
@@ -117,7 +140,7 @@ const Game = {
         }
     },
 
-    stopBg() {
+    stopBg(hardStop = false) {
         if (this.audio.fadeInterval) {
             clearInterval(this.audio.fadeInterval);
             this.audio.fadeInterval = null;
@@ -126,6 +149,16 @@ const Game = {
         this.audio.currentBgUrl = null;
         const c1 = this.audio.ch1;
         const c2 = this.audio.ch2;
+
+        if (hardStop) {
+            c1.pause();
+            c2.pause();
+            c1.volume = 0;
+            c2.volume = 0;
+            c1.currentTime = 0;
+            c2.currentTime = 0;
+            return;
+        }
 
         this.audio.fadeInterval = setInterval(() => {
             let activeVol = false;
@@ -281,28 +314,32 @@ const Game = {
 
     startTurn(isTransition = true, musicDelay = 0) {
         const player = this.state.players[this.state.currentPlayerIndex];
-        const factionMusic = this.getFactionMusic(player.faction);
         
-        // Use custom name
-        document.getElementById('overworld-title').innerText = `${player.name}'s Turn`;
+        // --- NEW LOGIC: Pick a unique terrain for this turn ---
+        const availableTerrains = TERRAIN_TRACKS.filter(t => t !== this.state.lastTerrainMusic);
+        const randomTerrain = availableTerrains[Math.floor(Math.random() * availableTerrains.length)];
         
-        // Update Border
-        this.updateFactionColor(player.faction);
+        this.state.currentTerrainMusic = randomTerrain;
+        this.state.lastTerrainMusic = randomTerrain;
+        // ------------------------------------------------------
 
+        // Reset to Town Theme for new turn
+        this.state.overworldTheme = 'town';
+        this.updateThemeButtonUI();
+        
+        const overworldMusic = this.getCurrentOverworldMusic();
+        document.getElementById('overworld-title').innerText = `${player.name}'s Turn`;
+        this.updateFactionColor(player.faction);
         this.showScreen('screen-overworld');
         
         if (!isTransition) {
-            this.playBg(factionMusic);
+            this.playBg(overworldMusic);
         } else {
-            if (musicDelay > 0) {
-                setTimeout(() => {
-                     if(this.state.currentScreen === 'screen-overworld') {
-                         this.playBg(factionMusic);
-                     }
-                }, musicDelay);
-            } else {
-                this.playBg(factionMusic);
-            }
+            setTimeout(() => {
+                if(this.state.currentScreen === 'screen-overworld') {
+                    this.playBg(overworldMusic);
+                }
+            }, musicDelay);
         }
     },
 
@@ -320,6 +357,37 @@ const Game = {
             'cove': 'assets/cove.mp3'
         };
         return map[faction];
+    },
+
+    toggleOverworldTheme() {
+        this.state.overworldTheme = (this.state.overworldTheme === 'town') ? 'tile' : 'town';
+        this.updateThemeButtonUI();
+        
+        // Play the appropriate music immediately
+        const music = this.getCurrentOverworldMusic();
+        this.playBg(music);
+    },
+
+    updateThemeButtonUI() {
+        const player = this.state.players[this.state.currentPlayerIndex];
+        const btn = document.getElementById('btn-theme-toggle');
+        const label = document.getElementById('label-theme-toggle');
+        
+        if (this.state.overworldTheme === 'town') {
+            label.innerText = "Town Theme";
+            btn.style.backgroundImage = `url('assets/${player.faction}.avif')`;
+        } else {
+            label.innerText = "Tile Theme";
+            btn.style.backgroundImage = `url('assets/tile.avif')`;
+        }
+    },
+
+    getCurrentOverworldMusic() {
+        if (this.state.overworldTheme === 'tile') {
+            return this.state.currentTerrainMusic; // Use the one selected at start of turn
+        }
+        const player = this.state.players[this.state.currentPlayerIndex];
+        return this.getFactionMusic(player.faction);
     },
 
     endTurn() {
@@ -345,7 +413,7 @@ const Game = {
             }
         }
 
-        this.stopBg();
+        this.stopBg(true);
 
         if (isSpecialEvent) {
             const ol = document.getElementById('event-overlay');
@@ -444,16 +512,13 @@ const Game = {
     },
 
     returnToOverworld() {
-        // 1. Stop the SFX immediately
         this.audio.sfx.pause();
-        this.audio.sfx.currentTime = 0;
-        this.audio.sfx.onended = null; // Prevent the original callback from firing
-
-        // 2. Prevent double-execution if already transitioning
-        if (this.state.currentScreen === 'screen-overworld') return;
-
+        this.audio.sfx.onended = null;
         this.hideCombatOverlay();
-        this.startTurn(true); 
+        
+        // Instead of startTurn(true), we just switch screen and play the correct current music
+        this.showScreen('screen-overworld');
+        this.playBg(this.getCurrentOverworldMusic());
     },
 
     showRules(fromScreen) {
@@ -469,7 +534,9 @@ const Game = {
 
     exitRules() {
         this.showScreen(this.state.previousScreen);
-        if (this.state.previousMusic) {
+        if (this.state.currentScreen === 'screen-overworld') {
+            this.playBg(this.getCurrentOverworldMusic());
+        } else if (this.state.previousMusic) {
             this.playBg(this.state.previousMusic);
         }
     },
@@ -520,6 +587,7 @@ const Game = {
         this.state.round = 1;
         this.state.selectedTheme = null;
         this.state.playerCount = 3;
+        this.state.lastTerrainMusic = null;
         
         this.stopBg();
         setTimeout(() => this.init(), 100);

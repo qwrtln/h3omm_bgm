@@ -15,7 +15,7 @@ const CORE_ASSETS = [
     './assets/inferno.avif', './assets/dungeon.avif', './assets/necropolis.avif',
     './assets/fortress.avif', './assets/stronghold.avif',
     './assets/conflux.avif', './assets/cove.avif',
-    './assets/newtime.avif',
+    './assets/newtime.avif','./assets/tile.avif',
     './assets/start.avif', './assets/resource.avif', './assets/artifact.avif', 
     './assets/end_turn.avif', './assets/rules.avif', './assets/win_game.avif',
     './assets/victory.avif', './assets/retreat.avif', './assets/lose.avif'

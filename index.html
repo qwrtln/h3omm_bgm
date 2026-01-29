@@ -375,25 +375,32 @@
   <div id="screen-overworld" class="screen">
     <h1 id="overworld-title">Player 1's Turn</h1>
     <div class="overworld-layout">
-        
-        <!-- Top Block: 2x2 Grid -->
-        <div class="grid-top-quadrant">
-            <div id="event-overlay">
-                <div id="event-text"></div>
-            </div>
-            <div class="btn-wrapper"><span class="btn-label">Battle</span><div class="btn btn-start" onclick="Game.startCombat()"></div></div>
-            <div class="btn-wrapper"><span class="btn-label">Resource</span><div class="btn btn-resource" onclick="Game.handleResource()"></div></div>
-            <div class="btn-wrapper"><span class="btn-label">Artifact</span><div class="btn btn-artifact" onclick="Game.handleArtifact()"></div></div>
-            <div class="btn-wrapper"><span class="btn-label">End Turn</span><div class="btn btn-endturn" onclick="Game.endTurn()"></div></div>
-        </div>
 
-        <!-- Bottom Block: Horizontal Row -->
-        <div class="horizontal-action-row">
-            <div class="btn-wrapper"><span class="btn-label">Rules</span><div class="btn btn-rules" onclick="Game.showRules('screen-overworld')"></div></div>
-            <div class="btn-wrapper"><span class="btn-label">Win</span><div class="btn btn-wingame" onclick="Game.winGame()"></div></div>
-            <div class="btn-wrapper"><span class="btn-label">Lose</span><div class="btn btn-losegame" onclick="Game.loseGame()"></div></div>
-        </div>
+      <!-- Top Block: 2x2 Grid (Rows 1 & 2) -->
+      <div class="grid-top-quadrant">
+          <div id="event-overlay">
+              <div id="event-text"></div>
+          </div>
+          <div class="btn-wrapper"><span class="btn-label">Battle</span><div class="btn btn-start" onclick="Game.startCombat()"></div></div>
+          <div class="btn-wrapper"><span class="btn-label">Resource</span><div class="btn btn-resource" onclick="Game.handleResource()"></div></div>
+          <div class="btn-wrapper"><span class="btn-label">Artifact</span><div class="btn btn-artifact" onclick="Game.handleArtifact()"></div></div>
+          <div class="btn-wrapper"><span class="btn-label">End Turn</span><div class="btn btn-endturn" onclick="Game.endTurn()"></div></div>
+      </div>
 
+      <!-- Row 3: Rules & Theme Toggle -->
+      <div class="horizontal-action-row">
+          <div class="btn-wrapper"><span class="btn-label">Rules</span><div class="btn btn-rules" onclick="Game.showRules('screen-overworld')"></div></div>
+          <div class="btn-wrapper">
+              <span class="btn-label" id="label-theme-toggle">Town Theme</span>
+              <div id="btn-theme-toggle" class="btn" onclick="Game.toggleOverworldTheme()"></div>
+          </div>
+      </div>
+
+      <!-- Row 4: Win & Lose -->
+      <div class="horizontal-action-row">
+          <div class="btn-wrapper"><span class="btn-label">Win</span><div class="btn btn-wingame" onclick="Game.winGame()"></div></div>
+          <div class="btn-wrapper"><span class="btn-label">Lose</span><div class="btn btn-losegame" onclick="Game.loseGame()"></div></div>
+      </div>
     </div>
   </div>
 
