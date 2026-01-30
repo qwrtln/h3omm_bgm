@@ -80,10 +80,11 @@ const Game = {
         round: 1,
         selectedTheme: null,
         playerCount: 3,
+        lastAiIdx: -1,
         lastBattleIdx: -1,
         lastCombatIdx: -1,
         lastTreasureIdx: -1,
-        overworldTheme: 'town', // 'town' or 'tile'
+        overworldTheme: 'tile', // 'town' or 'tile'
         currentTerrainMusic: null, // Track the specific terrain for this turn
         lastTerrainMusic: null,    // Track the previous turn's terrain to avoid repeats
         pendingGameOver: null, // Stores 'win' or 'lose
@@ -379,7 +380,7 @@ const Game = {
         // ------------------------------------------------------
 
         // Reset to Town Theme for new turn
-        this.state.overworldTheme = 'town';
+        this.state.overworldTheme = 'tile';
         this.updateThemeButtonUI();
         
         const overworldMusic = this.getCurrentOverworldMusic();
@@ -428,7 +429,7 @@ const Game = {
         const btn = document.getElementById('btn-theme-toggle');
         const label = document.getElementById('label-theme-toggle');
         
-        if (this.state.overworldTheme === 'town') {
+        if (this.state.overworldTheme === 'tile') {
             label.innerText = "Town Theme";
             btn.style.backgroundImage = `url('assets/${player.faction}.avif')`;
         } else {
@@ -585,8 +586,12 @@ const Game = {
         this.state.previousScreen = fromScreen;
         this.state.previousMusic = this.audio.currentBgUrl;
         
-        const aiNum = Math.floor(Math.random() * 3) + 1;
-        let aiFile = `assets/ai${aiNum}.mp3`;
+        let introNum;
+        do {
+            introNum = Math.floor(Math.random() * 3) + 1;
+        } while (introNum === this.state.lastAiIdx && introNum !== 0);
+        this.state.lastAiIdx = introNum;
+        let aiFile = `assets/ai${introNum}.mp3`;
 
         this.playBg(aiFile);
         this.showScreen('screen-rules');
