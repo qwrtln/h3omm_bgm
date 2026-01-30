@@ -84,9 +84,10 @@ const Game = {
         lastBattleIdx: -1,
         lastCombatIdx: -1,
         lastTreasureIdx: -1,
-        overworldTheme: 'tile', // 'town' or 'tile'
+        overworldTheme: 'town', // 'town' or 'tile'
         currentTerrainMusic: null, // Track the specific terrain for this turn
         lastTerrainMusic: null,    // Track the previous turn's terrain to avoid repeats
+        trackPositions: {},
         pendingGameOver: null, // Stores 'win' or 'lose
         // Helper state for setup
         tempPlayerName: ""
@@ -109,6 +110,11 @@ const Game = {
         const fullUrl = url.includes('/') ? url : `assets/${url}`;
         if (this.audio.currentBgUrl === fullUrl) return;
 
+        if (this.audio.currentBgUrl) {
+            const currentActiveChannel = this.audio[this.audio.activeChannel];
+            this.state.trackPositions[this.audio.currentBgUrl] = currentActiveChannel.currentTime;
+        }
+
         if (this.audio.fadeInterval) {
             clearInterval(this.audio.fadeInterval);
             this.audio.fadeInterval = null;
@@ -119,6 +125,8 @@ const Game = {
         const incoming = this.audio[nextChannelName];
 
         incoming.src = fullUrl;
+        const savedTime = this.state.trackPositions[fullUrl] || 0;
+        incoming.currentTime = savedTime;
         incoming.loop = true;
         incoming.volume = 0;
         incoming.muted = this.audio.isMuted;
@@ -129,10 +137,9 @@ const Game = {
         if (playPromise) playPromise.catch(e => console.error("Audio Play Err:", e));
 
         if (!fade) {
-            incoming.volume = 1;
+            incoming.volume = this.audio.masterVolume;
             outgoing.pause();
             outgoing.volume = 0;
-            outgoing.currentTime = 0;
         } else {
             this.audio.fadeInterval = setInterval(() => {
                 const step = 0.05;
@@ -151,7 +158,6 @@ const Game = {
                     clearInterval(this.audio.fadeInterval);
                     this.audio.fadeInterval = null;
                     outgoing.pause();
-                    outgoing.currentTime = 0;
                 }
             }, 50);
         }
@@ -163,6 +169,10 @@ const Game = {
             this.audio.fadeInterval = null;
         }
 
+        if (this.audio.currentBgUrl) {
+            this.state.trackPositions[this.audio.currentBgUrl] = this.audio[this.audio.activeChannel].currentTime;
+        }
+
         this.audio.currentBgUrl = null;
         const c1 = this.audio.ch1;
         const c2 = this.audio.ch2;
@@ -172,8 +182,6 @@ const Game = {
             c2.pause();
             c1.volume = 0;
             c2.volume = 0;
-            c1.currentTime = 0;
-            c2.currentTime = 0;
             return;
         }
 
@@ -201,7 +209,7 @@ const Game = {
     resumeBg() {
         const active = this.audio[this.audio.activeChannel];
         if (this.audio.currentBgUrl && active.paused) {
-            active.volume = 1;
+            active.volume = this.audio.masterVolume;
             active.play().catch(e => console.log("Resume err", e));
         }
     },
@@ -371,20 +379,19 @@ const Game = {
     startTurn(isTransition = true, musicDelay = 0) {
         const player = this.state.players[this.state.currentPlayerIndex];
         
-        // --- NEW LOGIC: Pick a unique terrain for this turn ---
+        this.state.trackPositions = {};
         const availableTerrains = TERRAIN_TRACKS.filter(t => t !== this.state.lastTerrainMusic);
         const randomTerrain = availableTerrains[Math.floor(Math.random() * availableTerrains.length)];
-        
         this.state.currentTerrainMusic = randomTerrain;
         this.state.lastTerrainMusic = randomTerrain;
-        // ------------------------------------------------------
 
         // Reset to Town Theme for new turn
-        this.state.overworldTheme = 'tile';
+        this.state.overworldTheme = 'town';
         this.updateThemeButtonUI();
         
         const overworldMusic = this.getCurrentOverworldMusic();
         document.getElementById('overworld-title').innerText = `${player.name}'s Turn`;
+        document.getElementById('overworld-faction-subtitle').innerText = player.faction;
         this.updateFactionColor(player.faction);
         this.showScreen('screen-overworld');
         
@@ -573,6 +580,7 @@ const Game = {
     },
 
     returnToOverworld() {
+        this.state.trackPositions = {};
         this.audio.sfx.pause();
         this.audio.sfx.onended = null;
         this.hideCombatOverlay();
@@ -682,6 +690,7 @@ const Game = {
         this.audio.sfx.onended = null;
         this.audio.sfx.onerror = null;
         this.audio.currentBgUrl = null;
+        this.state.trackPositions = {};
 
         // 3. Return to Main Menu
         setTimeout(() => this.init(), 100);

@@ -138,6 +138,32 @@
         width: 100vw; /* Allow full viewport width */
     }
 
+    #overworld-faction-subtitle {
+        font-size: 1.1rem;
+        color: var(--faction-color);
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 2px;
+        /* Strong black outline to match the game's UI style */
+        text-shadow: 
+            -1px -1px 0 #000,  
+            1px -1px 0 #000,
+            -1px  1px 0 #000,
+            1px  1px 0 #000,
+            0px  0px 5px rgba(0,0,0,0.8);
+        
+        /* Pull it up tightly against the H1 */
+        margin-top: -15px; 
+        /* Prevent it from pushing the layout down */
+        margin-bottom: -5px; 
+        z-index: 10;
+    }
+
+    /* Adjust the main title margin to make room for the subtitle */
+    #overworld-title {
+        margin-bottom: 10px;
+    }
+
     /* Ensure the top 2x2 doesn't stretch wider than the 3-button row for symmetry */
     .grid-top-quadrant {
         display: grid;
@@ -485,6 +511,7 @@
   <!-- SCREEN 4: Overworld -->
   <div id="screen-overworld" class="screen">
     <h1 id="overworld-title">Player 1's Turn</h1>
+    <div id="overworld-faction-subtitle">Castle</div> 
     <div class="overworld-layout">
 
       <!-- Top Block: 2x2 Grid (Rows 1 & 2) -->
