@@ -9,6 +9,7 @@ const FACTION_COLORS = {
     'stronghold': '#A67C52',
     'conflux': '#C158C1',
     'cove': '#20B2AA',
+    'factory': '#fbff04ff',
     'neutral': '#333333' // Default
 };
 
@@ -26,7 +27,7 @@ const ASSET_QUEUE = [
     'assets/castle.mp3', 'assets/rampart.mp3', 'assets/tower.mp3',
     'assets/inferno.mp3', 'assets/dungeon.mp3', 'assets/necropolis.mp3',
     'assets/fortress.mp3', 'assets/stronghold.mp3',
-    'assets/conflux.mp3', 'assets/cove.mp3',
+    'assets/conflux.mp3', 'assets/cove.mp3', 'assets/factory.mp3',
     'assets/battle1.mp3', 'assets/battle2.mp3', 'assets/battle3.mp3', 'assets/battle4.mp3',
     'assets/battle5.mp3', 'assets/battle6.mp3', 'assets/battle7.mp3', 'assets/battle8.mp3',
     'assets/combat1.mp3', 'assets/combat2.mp3', 'assets/combat3.mp3', 'assets/combat4.mp3',
@@ -53,7 +54,7 @@ const ASSET_QUEUE = [
     'assets/castle.avif', 'assets/rampart.avif', 'assets/tower.avif',
     'assets/inferno.avif', 'assets/dungeon.avif', 'assets/necropolis.avif',
     'assets/fortress.avif', 'assets/stronghold.avif',
-    'assets/conflux.avif', 'assets/cove.avif',
+    'assets/conflux.avif', 'assets/cove.avif', 'assets/factory.avif',
     'assets/newday.avif', 'assets/newtime.avif','./assets/tile.avif',
     'assets/start.avif', 'assets/resource.avif', 'assets/artifact.avif', 
     'assets/end_turn.avif', 'assets/rules.avif', 'assets/win_game.avif',
