@@ -624,7 +624,7 @@ const Game = {
 
     combatLose() {
         this.stopBg();
-        this.showCombatOverlay(Localization.get('msg_defeat'), "assets/lose.avif");
+        this.showCombatOverlay(Localization.get('msg_defeat'), "assets/eliminated.avif");
         this.playSfx('lose.mp3', () => this.returnToOverworld());
     },
 
