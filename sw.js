@@ -1,4 +1,4 @@
-const CACHE_NAME = `h3omm3_core_1.0.0`
+const CACHE_NAME = `h3omm3_core_1.1.0`
 
 // Core assets required for immediate UI rendering
 const CORE_ASSETS = [
@@ -21,7 +21,7 @@ const CORE_ASSETS = [
     './assets/gold.avif', './assets/valuable.avif',
     './assets/start.avif', './assets/resource.avif', './assets/artifact.avif', 
     './assets/end_turn.avif', './assets/rules.avif', './assets/win_game.avif',
-    './assets/victory.avif', './assets/retreat.avif', './assets/lose.avif',
+    './assets/victory.avif', './assets/retreat.avif', './assets/lose.avif', './assets/eliminated.avif',
     './assets/dirt.avif', './assets/grass.avif', './assets/lava.avif', './assets/rough.avif',
     './assets/sand.avif', './assets/snow.avif', './assets/swamp.avif', './assets/underground.avif',
     './assets/water.avif',

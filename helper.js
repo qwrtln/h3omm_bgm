@@ -36,7 +36,7 @@ const ASSET_QUEUE = [
     'assets/artifact.mp3',
     'assets/newday.mp3', 'assets/newweek.mp3', 'assets/newmonth.mp3',
     'assets/win_battle.mp3', 
-    'assets/experience.mp3', 'assets/lose.mp3', 'assets/retreat.mp3',
+    'assets/experience.mp3', 'assets/lose.mp3', 'assets/retreat.mp3', 'assets/eliminated.avif',
     'assets/win_game.mp3', 'assets/ultimatelose.mp3',
 
     // Treasure
@@ -325,7 +325,8 @@ const Game = {
                     this.state.players.push({ 
                         id: playerIndex, 
                         faction: faction, 
-                        name: this.state.tempPlayerName 
+                        name: this.state.tempPlayerName,
+                        eliminated: false 
                     });
                     this.startFactionSelection(playerIndex + 1);
                 };
@@ -358,8 +359,14 @@ const Game = {
             this.state.musicTimer = null;
         }
         const player = this.state.players[this.state.currentPlayerIndex];
-        this.state.trackPositions = {};
+        
+        // Safety check if current player is eliminated (should be handled in endTurn, but safe guard)
+        if (player.eliminated) {
+            this.endTurn();
+            return;
+        }
 
+        this.state.trackPositions = {};
         this.state.currentOverworldName = player.faction;
         
         // Update UI
@@ -427,16 +434,50 @@ const Game = {
     },
 
     endTurn() {
-        let nextIndex = this.state.currentPlayerIndex + 1;
+        // Find next non-eliminated player
+        let nextIndex = this.state.currentPlayerIndex;
+        let loopCount = 0;
+        let found = false;
         let nextRound = this.state.round;
+        let isNewRound = false;
+
+        // Loop until we find a valid player or traverse the whole list
+        while(loopCount < this.state.players.length) {
+            nextIndex++;
+            // Wrap around
+            if (nextIndex >= this.state.players.length) {
+                nextIndex = 0;
+                // Only increment round if we actually wrapped from last player to first
+                // But we need to be careful not to increment multiple times in recursion
+                isNewRound = true;
+            }
+
+            if (!this.state.players[nextIndex].eliminated) {
+                found = true;
+                break;
+            }
+            loopCount++;
+        }
+
+        // If everyone is eliminated, something is wrong, or logic handled elsewhere.
+        // If only 1 player remains, we might want to check for auto-win?
+        // But prompt says if single player remains and is eliminated -> defeat.
+
+        if (!found) {
+            // Everyone is eliminated (should normally trigger defeat via confirmElimination)
+            this.finishGameSequence('assets/lose.avif', 'Defeat', 'assets/ultimatelose.mp3', false);
+            return;
+        }
+        
+        if (isNewRound) {
+            nextRound++;
+        }
+
         let sfxToPlay = 'newday.mp3';
         let overlayText = "New Day";
         let image = "url('assets/newday.avif')";
 
-        if (nextIndex >= this.state.players.length) {
-            nextIndex = 0;
-            nextRound++;
-            
+        if (isNewRound) {
             if (nextRound % 2 === 0) {
                 sfxToPlay = 'newmonth.mp3';
                 overlayText = "Astrologers Proclaim!";
@@ -473,10 +514,8 @@ const Game = {
         this.audio.ch2.pause();
 
         if (type === 'gold') {
-            // Play specific gold sound
             this.playSfx('gold.mp3', () => this.resumeBg());
-        } else {
-            // Play random treasure sound (1-7)
+        } else if (type === 'valuable') {
             let introNum;
             do {
                 introNum = Math.floor(Math.random() * 7) + 1;
@@ -484,13 +523,16 @@ const Game = {
             
             this.state.lastTreasureIdx = introNum;
             this.playSfx(`treasure${introNum}.mp3`, () => this.resumeBg());
+        } else if (type === 'artifact') {
+            this.playSfx('artifact.mp3', () => this.resumeBg());
         }
     },
 
-    handleArtifact() {
-        this.audio.ch1.pause();
-        this.audio.ch2.pause();
-        this.playSfx('artifact.mp3', () => this.resumeBg());
+    askEliminate() {
+        const player = this.state.players[this.state.currentPlayerIndex];
+        this.state.pendingGameOver = 'eliminate';
+        document.getElementById('confirm-msg').innerText = `Eliminate ${player.name}?`;
+        document.getElementById('confirm-overlay').style.display = 'flex';
     },
 
     startCombat() {
@@ -605,6 +647,15 @@ const Game = {
                 this.finishGameSequence('assets/win_game.avif', `${playerName}'s Victory!`, 'assets/win_game.mp3', true);
             } else if (action === 'lose') {
                 this.finishGameSequence('assets/lose.avif', 'Defeat', 'assets/ultimatelose.mp3', false);
+            } else if (action === 'eliminate') {
+                const player = this.state.players[this.state.currentPlayerIndex];
+                player.eliminated = true;
+                const activePlayers = this.state.players.filter(p => !p.eliminated);
+                if (activePlayers.length === 0) {
+                    this.finishGameSequence('assets/lose.avif', 'Defeat', 'assets/ultimatelose.mp3', false);
+                } else {
+                    this.endTurn();
+                }
             }
         }
     },
