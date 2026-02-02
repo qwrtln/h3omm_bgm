@@ -1,4 +1,4 @@
-const CACHE_NAME = `h3omm3_core_1.7.1`
+const CACHE_NAME = `h3omm3_core_1.7.2`
 
 // Core assets required for immediate UI rendering
 const CORE_ASSETS = [
