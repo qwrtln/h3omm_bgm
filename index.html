@@ -14,7 +14,7 @@
       --btn-size: 130px;
       --gold-color: #FFD700; 
       --gold-gradient: linear-gradient(45deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C,#FCF6BA, #B38728, #FBF5B7, #AA771C);
-      --faction-color: #333; /* Default, updates via JS */
+      --faction-color: #333; 
     }
 
     body {
@@ -67,171 +67,35 @@
       text-align: center;
     }
 
-    .name-edit-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-        background: rgba(0,0,0,0.5);
-        padding: 5px 15px;
-        border-radius: 10px;
-        border: 1px solid #444;
-    }
-    
-    .edit-icon {
-        cursor: pointer;
-        font-size: 1.5rem;
-        color: white; 
-        transition: transform 0.2s;
-        background: #333;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        border: 1px solid var(--gold-color);
-        box-shadow: 0 2px 5px black;
-        pointer-events: auto; 
-    }
-    
-    .edit-icon:active {
-        transform: scale(0.9);
-        background: #555;
-    }
-
-    /* Grids */
-    .grid-2x2 {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-    }
-
-    /* NEW 3-COLUMN GRID for Theme Selection */
-    .grid-3col {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        /* Adjust size for smaller screens or lots of buttons */
-    }
-    .grid-3col .btn {
-        height: 100px; /* Slightly smaller for the 9-grid */
-    }
-    .grid-3col .btn-wrapper {
-        width: 100px;
-    }
-
-    .horizontal-action-row {
-        display: flex;
-        flex-direction: row; 
-        flex-wrap: nowrap;   
-        justify-content: center;
-        align-items: flex-start;
-        gap: 15px;
-        width: 100%;
-    }
-
-    .overworld-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        align-items: center;
-        width: 100vw; 
-    }
-
-    #overworld-faction-subtitle {
-        font-size: 1.1rem;
-        color: var(--faction-color);
-        text-transform: uppercase;
-        font-weight: bold;
-        letter-spacing: 2px;
-        text-shadow: 
-            -1px -1px 0 #000,  
-            1px -1px 0 #000,
-            -1px  1px 0 #000,
-            1px  1px 0 #000,
-            0px  0px 5px rgba(0,0,0,0.8);
-        margin-top: -15px; 
-        margin-bottom: -5px; 
-        z-index: 10;
-    }
-
-    #overworld-title {
-        margin-bottom: 10px;
-    }
-
-    .grid-top-quadrant {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        position: relative;
-        width: fit-content;
-    }
-
-    /* Desktop Volume */
-    #desktop-volume-ctrl { position: fixed; right: 20px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 20px; background: rgba(0, 0, 0, 0.9); padding: 20px 10px; border: 2px solid #555; box-shadow: 0 0 0 2px #BF953F, 0 0 15px black; border-radius: 30px; z-index: 10001; width: 40px; }
-    #mute-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; filter: drop-shadow(0 0 2px gold); }
-    #mute-btn.is-muted { filter: grayscale(1); opacity: 0.7; }
-    .slider-container { position: relative; width: 30px; height: 150px; display: flex; align-items: center; justify-content: center; }
-    #volume-slider { -webkit-appearance: none; appearance: none; background: transparent; width: 150px; height: 30px; transform: rotate(-90deg); transform-origin: center; cursor: pointer; outline: none; }
-    #volume-slider::-webkit-slider-runnable-track { width: 100%; height: 8px; background: #111; border: 1px solid #444; border-radius: 4px; }
-    #volume-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #15a5e2; border: 2px solid #dcdcdc; margin-top: -9px; }
-    @media (max-width: 1024px) { #desktop-volume-ctrl { display: none; } }
-
-    @media (max-width: 430px) { :root { --btn-size: 110px; } .grid-3col .btn { height: 90px; } .grid-3col .btn-wrapper { width: 90px; } }
-    @media (max-width: 350px) { :root { --btn-size: 95px; } .grid-3col .btn { height: 80px; } .grid-3col .btn-wrapper { width: 80px; } }
-
+    .name-edit-container { display: flex; align-items: center; justify-content: center; gap: 15px; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 10px; border: 1px solid #444; }
+    .edit-icon { cursor: pointer; font-size: 1.5rem; color: white; transition: transform 0.2s; background: #333; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--gold-color); box-shadow: 0 2px 5px black; pointer-events: auto; }
+    .edit-icon:active { transform: scale(0.9); background: #555; }
+    .grid-2x2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .grid-3col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .grid-3col .btn { height: 100px; }
+    .grid-3col .btn-wrapper { width: 100px; }
+    .horizontal-action-row { display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center; align-items: flex-start; gap: 15px; width: 100%; }
+    .overworld-layout { display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100vw; }
+    #overworld-faction-subtitle { font-size: 1.1rem; color: var(--faction-color); text-transform: uppercase; font-weight: bold; letter-spacing: 2px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0px 0px 5px rgba(0,0,0,0.8); margin-top: -15px; margin-bottom: -5px; z-index: 10; }
+    #overworld-title { margin-bottom: 10px; }
+    .grid-top-quadrant { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; position: relative; width: fit-content; }
     .faction-container { display: flex; flex-direction: column; gap: 8px; align-items: center; }
     .faction-row { display: flex; gap: 10px; justify-content: center; }
-
     .btn-wrapper { display: flex; flex-direction: column; align-items: center; width: var(--btn-size); }
     .btn-label { font-size: 0.8rem; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; margin-bottom: 4px; text-align: center; white-space: nowrap; overflow: hidden; width: 100%; }
-
-    .btn {
-      width: 100%;
-      height: var(--btn-size);
-      border: 2px solid #555;
-      border-radius: 15px;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-color: #333;
-      box-shadow: 0 5px 8px rgba(0,0,0,0.6);
-      cursor: pointer;
-      transition: transform 0.1s;
-    }
+    .btn { width: 100%; height: var(--btn-size); border: 2px solid #555; border-radius: 15px; background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #333; box-shadow: 0 5px 8px rgba(0,0,0,0.6); cursor: pointer; transition: transform 0.1s; }
     .btn:active { transform: scale(0.95); box-shadow: 0 2px 4px rgba(0,0,0,0.6); }
-
-    /* Overlays */
     #click-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; flex-direction: column; cursor: pointer; }
-
-    #event-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        display: none;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        background-color: rgba(0,0,0,0.7); 
-        background-image: url('assets/newtime.avif');
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: 300px 300px; 
-    }
+    #event-overlay { position: fixed; inset: 0; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(0,0,0,0.7); background-image: url('assets/newtime.avif'); background-repeat: no-repeat; background-position: center; background-size: 300px 300px; }
     #event-text { font-size: 1.8rem; color: var(--gold-color); text-shadow: 3px 3px 0 #000; text-align: center; font-weight: bold; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 10px; max-width: 90%; }
-
     .counter-box { display: flex; flex-direction: column; align-items: center; gap: 15px; }
     #p-count-display { font-size: 4rem; font-weight: bold; color: white; }
     .control-row { display: flex; gap: 20px; }
     .ctrl-btn { font-size: 2rem; width: 60px; height: 60px; border-radius: 10px; background: #444; border: 1px solid gold; color: gold; }
-
-    /* Images */
     .btn-good { background-image: url('assets/good.avif'); }
     .btn-evil { background-image: url('assets/evil.avif'); }
     .btn-neutral { background-image: url('assets/neutral.avif'); }
     .btn-secret { background-image: url('assets/secret.avif'); }
-
     .btn-castle { background-image: url('assets/castle.avif'); }
     .btn-rampart { background-image: url('assets/rampart.avif'); }
     .btn-tower { background-image: url('assets/tower.avif'); }
@@ -243,8 +107,6 @@
     .btn-conflux { background-image: url('assets/conflux.avif'); }
     .btn-cove { background-image: url('assets/cove.avif'); }
     .btn-factory { background-image: url('assets/factory.avif'); }
-
-    /* Terrains */
     .btn-dirt { background-image: url('assets/dirt.avif'); }
     .btn-grass { background-image: url('assets/grass.avif'); }
     .btn-lava { background-image: url('assets/lava.avif'); }
@@ -255,7 +117,6 @@
     .btn-underground { background-image: url('assets/underground.avif'); }
     .btn-water { background-image: url('assets/water.avif'); }
     .btn-wasteland { background-image: url('assets/wasteland.avif'); }
-
     .btn-start { background-image: url('assets/start.avif'); }
     .btn-resource { background-image: url('assets/resource.avif'); }
     .btn-valuable { background-image: url('assets/valuable.avif'); }
@@ -266,17 +127,139 @@
     .btn-wingame { background-image: url('assets/win_game.avif'); }
     .btn-losegame { background-image: url('assets/lose.avif'); }
     .btn-eliminated { background-image: url('assets/eliminated.avif'); }
-    
     .btn-victory { background-image: url('assets/victory.avif'); }
     .btn-retreat { background-image: url('assets/retreat.avif'); }
     .btn-surrender { background-image: url('assets/surrender.avif'); }
     .btn-lose { background-image: url('assets/eliminated.avif'); }
-    
     .btn-confirm { background-color: #28a745; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
     .btn.disabled { filter: brightness(0.4); cursor: not-allowed; pointer-events: none; border-color: #333; }
-
-    @media (max-width: 380px) { :root { --btn-size: 100px; } }
+    @media (max-width: 430px) { :root { --btn-size: 110px; } .grid-3col .btn { height: 90px; } .grid-3col .btn-wrapper { width: 90px; } }
+    @media (max-width: 350px) { :root { --btn-size: 95px; } .grid-3col .btn { height: 80px; } .grid-3col .btn-wrapper { width: 80px; } }
     @media (max-height: 700px) { .screen { gap: 8px; } h1,h2 { font-size: 1.4rem; } }
+
+    /* --- OPTIONS MENU STYLES --- */
+
+    /* Toggle Button (Mobile Only) */
+    #options-btn {
+        position: fixed;
+        top: 25px;
+        right: 25px;
+        font-size: 2rem;
+        z-index: 10002;
+        cursor: pointer;
+        filter: drop-shadow(0 0 2px gold);
+        display: none; /* Desktop hidden by default via media query */
+    }
+
+    /* Options Menu Container */
+    #options-menu {
+        position: fixed;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        background: rgba(0, 0, 0, 0.95);
+        padding: 20px;
+        z-index: 10001;
+    }
+
+    /* Wrapper for Mute + Slider (Row on Mobile, Col on Desktop) */
+    .vol-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    #mute-btn { background: none; border: none; font-size: 1.8rem; cursor: pointer; filter: drop-shadow(0 0 2px gold); color: white; }
+    #mute-btn.is-muted { filter: grayscale(1); opacity: 0.7; }
+
+    .slider-container { position: relative; display: flex; align-items: center; justify-content: center; }
+
+    #volume-slider { 
+        -webkit-appearance: none; appearance: none; background: transparent; 
+        cursor: pointer; outline: none; 
+    }
+
+    /* Chrome/Safari Track */
+    #volume-slider::-webkit-slider-runnable-track { height: 8px; background: #111; border: 1px solid #444; border-radius: 4px; }
+    /* Firefox Track */
+    #volume-slider::-moz-range-track { height: 8px; background: #111; border: 1px solid #444; border-radius: 4px; }
+
+    /* Thumb */
+    #volume-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #15a5e2; border: 2px solid #dcdcdc; margin-top: -9px; }
+    #volume-slider::-moz-range-thumb { height: 24px; width: 24px; border-radius: 50%; background: #15a5e2; border: 2px solid #dcdcdc; border: none; }
+
+    /* Autoplay Toggle */
+    .autoplay-container { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; border-top: 1px solid #444; padding-top: 15px; }
+    .autoplay-label { font-size: 0.9rem; color: #ccc; text-align: center; }
+    .toggle-btn {
+        width: 50px; height: 26px; background: #333; border-radius: 13px; position: relative; cursor: pointer; border: 2px solid #555;
+    }
+    .toggle-btn::after {
+        content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #888; border-radius: 50%; transition: 0.3s;
+    }
+    .toggle-btn.active { background: #28a745; border-color: #28a745; }
+    .toggle-btn.active::after { left: 26px; background: white; }
+
+    /* Github Link */
+    .github-link { margin-top: 5px; font-size: 0.85rem; color: #BF953F; text-decoration: none; border-bottom: 1px dashed #BF953F; padding-bottom: 2px; }
+    .github-link:hover { color: white; border-color: white; }
+
+    /* Desktop View (Sidebar) */
+    @media (min-width: 1025px) {
+        #options-btn { display: none; }
+        #options-menu {
+            right: 20px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            width: 60px;
+            padding: 20px 10px;
+            border: 2px solid #555;
+            box-shadow: 0 0 0 2px #BF953F, 0 0 15px black;
+            border-radius: 20px;
+        }
+        .vol-wrapper {
+            flex-direction: column;
+        }
+        /* Vertical slider for Desktop */
+        .slider-container { width: 30px; height: 150px; }
+        #volume-slider { width: 150px; height: 30px; transform: rotate(-90deg); transform-origin: center; }
+        .autoplay-label { font-size: 0.7rem; }
+    }
+
+    /* Mobile View (Overlay) */
+    @media (max-width: 1024px) {
+        #options-btn { display: block; }
+        
+        #options-menu {
+            display: none; /* Hidden by default, toggled via JS */
+            position: fixed;
+            top: 7px; right: 7px; bottom: 7px; left: 7px; 
+            width: auto; height: auto;
+            transform: none;
+            justify-content: center;
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        .vol-wrapper {
+            flex-direction: row; /* Horizontal layout */
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Horizontal slider for Mobile */
+        .slider-container { width: 60%; height: auto; }
+        #volume-slider { width: 100%; height: 30px; transform: none; margin: 0; }
+
+        .autoplay-label { font-size: 1.1rem; }
+        .toggle-btn { width: 60px; height: 32px; border-radius: 16px; }
+        .toggle-btn::after { width: 24px; height: 24px; top: 2px; left: 2px; }
+        .toggle-btn.active::after { left: 30px; }
+    }
+
   </style>
 </head>
 <body>
@@ -506,12 +489,24 @@
       </div>
   </div>
 
-  <!-- Volume Sidebar -->
-  <div id="desktop-volume-ctrl">
-      <div id="mute-btn" onclick="Game.toggleMute()">🔊</div>
-      <div class="slider-container">
-          <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" oninput="Game.setVolume(this.value)">
+  <!-- OPTIONS MENU: Toggle Button (Mobile) -->
+  <div id="options-btn" onclick="Game.toggleOptionsMenu()">⚙️</div>
+
+  <!-- OPTIONS MENU: Content (Desktop Sidebar / Mobile Overlay) -->
+  <div id="options-menu">
+      <div class="vol-wrapper">
+          <div id="mute-btn" onclick="Game.toggleMute()">🔊</div>
+          <div class="slider-container">
+              <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" oninput="Game.setVolume(this.value)">
+          </div>
       </div>
+
+      <div class="autoplay-container">
+          <span class="autoplay-label" data-i18n="btn_autoplay">Autoplay Overworld Music</span>
+          <div id="autoplay-toggle" class="toggle-btn active" onclick="Game.toggleAutoplay()"></div>
+      </div>
+
+      <a href="https://github.com/exevirus/h3omm_bgm" target="_blank" class="github-link" data-i18n="btn_github">App Github Repository</a>
   </div>
 
   <script src="locale.js"></script>

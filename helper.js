@@ -119,7 +119,9 @@ const Game = {
         currentOverworldName: null, // Holds 'castle', 'dirt', 'lava', etc.
         trackPositions: {},
         pendingGameOver: null,
-        tempPlayerName: ""
+        tempPlayerName: "",
+        isAutoplay: true,
+        lastTerrain: null
     },
 
     audio: {
@@ -134,9 +136,9 @@ const Game = {
     },
 
     // --- AUDIO ENGINE ---
-    playBg(url, fade = true) {
+    playBg(url, fade = true, loop = true) {
         const fullUrl = url.includes('/') ? url : `assets/${url}`;
-        if (this.audio.currentBgUrl === fullUrl) return;
+        if (this.audio.currentBgUrl === fullUrl && !this.state.isAutoplay) return;
 
         if (this.state.musicTimer) {
             clearTimeout(this.state.musicTimer);
@@ -160,7 +162,7 @@ const Game = {
         incoming.src = fullUrl;
         const savedTime = this.state.trackPositions[fullUrl] || 0;
         incoming.currentTime = savedTime;
-        incoming.loop = true;
+        incoming.loop = loop;
         incoming.volume = 0;
         incoming.muted = this.audio.isMuted;
         this.audio.currentBgUrl = fullUrl;
@@ -318,6 +320,81 @@ const Game = {
         this.showScreen('screen-start');
         this.updateFactionColor('neutral');
         this.initPreloader(); 
+
+        // Setup Autoplay Listeners
+        this.audio.ch1.onended = () => this.handleAudioEnd();
+        this.audio.ch2.onended = () => this.handleAudioEnd();
+    },
+
+    // Options Menu Handlers
+    toggleOptionsMenu() {
+        const menu = document.getElementById('options-menu');
+        const isMobile = window.innerWidth <= 1024;
+        
+        if (isMobile) {
+            if (menu.style.display === 'flex') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'flex';
+            }
+        }
+    },
+
+    toggleAutoplay() {
+        this.state.isAutoplay = !this.state.isAutoplay;
+        const btn = document.getElementById('autoplay-toggle');
+        
+        if (this.state.isAutoplay) {
+            btn.classList.add('active');
+            
+            // If in overworld, trigger cycle start immediately if current song is looping
+            if (this.state.currentScreen === 'screen-overworld') {
+                const active = this.audio[this.audio.activeChannel];
+                if (active && active.loop) {
+                   this.playBg(this.getCurrentOverworldMusic(), true, false); 
+                }
+            }
+        } else {
+            btn.classList.remove('active');
+            // If in overworld, set current track to loop
+            if (this.state.currentScreen === 'screen-overworld') {
+                const active = this.audio[this.audio.activeChannel];
+                if (active) active.loop = true;
+            }
+        }
+    },
+
+    handleAudioEnd() {
+        if (!this.state.isAutoplay) return;
+        if (this.state.currentScreen !== 'screen-overworld') return;
+
+        // Logic: Town -> Random Terrain -> Town -> Different Random Terrain
+        const player = this.state.players[this.state.currentPlayerIndex];
+        const faction = player.faction;
+        
+        let nextTheme = '';
+
+        // If currently playing the faction town, switch to terrain
+        if (this.state.currentOverworldName === faction) {
+            let nextTerrain;
+            do {
+                const randIndex = Math.floor(Math.random() * TERRAIN_NAMES.length);
+                nextTerrain = TERRAIN_NAMES[randIndex];
+            } while (nextTerrain === this.state.lastTerrain && TERRAIN_NAMES.length > 1);
+            
+            this.state.lastTerrain = nextTerrain;
+            nextTheme = nextTerrain;
+        } else {
+            // Otherwise (playing terrain or manual override), go back to town
+            nextTheme = faction;
+        }
+
+        this.state.currentOverworldName = nextTheme;
+        this.updateThemeButtonUI();
+        const nextUrl = `assets/${nextTheme}.mp3`;
+        this.state.trackPositions[nextUrl] = 0;
+
+        this.playBg(nextUrl, true, false); // Play next, no loop
     },
 
     updateFactionColor(faction) {
@@ -419,13 +496,20 @@ const Game = {
         this.showScreen('screen-overworld');
         
         const overworldMusic = `assets/${this.state.currentOverworldName}.mp3`;
+        // If autoplay is ON, do NOT loop, so it hits 'ended' event and cycles.
+        const shouldLoop = !this.state.isAutoplay;
+
+        // If autoplay is ON, ensure the track starts from 0 (in case it finished previously)
+        if (this.state.isAutoplay) {
+             this.state.trackPositions[overworldMusic] = 0;
+        }
 
         if (!isTransition) {
-            this.playBg(overworldMusic);
+            this.playBg(overworldMusic, true, shouldLoop);
         } else {
             setTimeout(() => {
                 if(this.state.currentScreen === 'screen-overworld') {
-                    this.playBg(overworldMusic);
+                    this.playBg(overworldMusic, true, shouldLoop);
                 }
             }, musicDelay);
         }
@@ -455,8 +539,17 @@ const Game = {
         this.state.currentOverworldName = themeName;
         this.updateThemeButtonUI();
         
+        // Manual override. If autoplay is ON, play this once (no loop), 
+        // then the event listener will pick up and return to pattern (Town)
+        const shouldLoop = !this.state.isAutoplay;
+        const url = `assets/${themeName}.mp3`;
+        
+        if (this.state.isAutoplay) {
+             this.state.trackPositions[url] = 0;
+        }
+
         // Switch Music immediately
-        this.playBg(`assets/${themeName}.mp3`);
+        this.playBg(url, true, shouldLoop);
         
         // Go back
         this.showScreen('screen-overworld');
@@ -645,7 +738,10 @@ const Game = {
         this.audio.sfx.onended = null;
         this.hideCombatOverlay();
         this.showScreen('screen-overworld');
-        this.playBg(this.getCurrentOverworldMusic());
+        
+        // Resume autoplay cycle or loop depending on state
+        const shouldLoop = !this.state.isAutoplay;
+        this.playBg(this.getCurrentOverworldMusic(), true, shouldLoop);
     },
 
     showRules(fromScreen) {
@@ -666,7 +762,8 @@ const Game = {
     exitRules() {
         this.showScreen(this.state.previousScreen);
         if (this.state.currentScreen === 'screen-overworld') {
-            this.playBg(this.getCurrentOverworldMusic());
+            const shouldLoop = !this.state.isAutoplay;
+            this.playBg(this.getCurrentOverworldMusic(), true, shouldLoop);
         } else if (this.state.previousMusic) {
             this.playBg(this.state.previousMusic);
         }
@@ -753,8 +850,12 @@ const Game = {
         this.audio.currentBgUrl = null;
         this.state.trackPositions = {};
 
+        // Close options if open on mobile
+        document.getElementById('options-menu').style.display = ''; 
+
         setTimeout(() => this.init(), 100);
     },
+
     showScreen(id) {
         document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
         document.getElementById(id).style.display = 'flex';
