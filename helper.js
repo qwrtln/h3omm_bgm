@@ -720,6 +720,17 @@ const Game = {
     getCurrentOverworldMusic() {
         return `assets/${this.state.currentOverworldName}.mp3`;
     },
+    
+    skipEventOverlay() {
+        if (this.state.eventCallback) {
+            const cb = this.state.eventCallback;
+            this.state.eventCallback = null; // Prevent double execution
+            this.audio.sfx.pause();
+            this.audio.sfx.onended = null;
+            document.getElementById('event-overlay').style.display = 'none';
+            cb();
+        }
+    },
 
     endTurn() {
         // Commit turn time
@@ -776,11 +787,18 @@ const Game = {
         ol.style.backgroundImage = image;
         document.getElementById('event-text').innerHTML = overlayText;
         ol.style.display = 'flex';
-        this.playSfx(sfxToPlay, () => {
+
+        // Define the transition logic
+        const proceed = () => {
             document.getElementById('event-overlay').style.display = 'none';
             this.state.currentPlayerIndex = nextIndex;
             this.state.round = nextRound;
             this.startTurn(true, 0);
+        };
+
+        this.state.eventCallback = proceed;
+        this.playSfx(sfxToPlay, () => {
+            if (this.state.eventCallback) this.skipEventOverlay();
         });
     },
 

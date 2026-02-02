@@ -414,55 +414,57 @@
       </div>
   </div>
 
-  <!-- SCREEN 4: Overworld -->
-  <div id="screen-overworld" class="screen">
-    <h1 id="overworld-title">Player 1's Turn</h1>
-    <div id="overworld-faction-subtitle">Castle</div> 
-    <div class="overworld-layout">
+    <!-- SCREEN 4: Overworld -->
+    <div id="screen-overworld" class="screen">
+        <h1 id="overworld-title">Player 1's Turn</h1>
+        <div id="overworld-faction-subtitle">Castle</div> 
+        <div class="overworld-layout">
 
-      <div class="grid-top-quadrant">
-          <div id="event-overlay">
-              <div id="event-text"></div>
+          <div class="grid-top-quadrant">
+              <div id="event-overlay" onclick="Game.skipEventOverlay()">
+                  <div id="event-text"></div>
+              </div>
+              <div id="resource-popup" onclick="if(event.target === this) this.style.display='none'" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:10001; flex-direction:column; justify-content:center; align-items:center;">
+                  <div style="background: var(--bg-color); padding: 30px; border-radius: 15px; border: 2px solid var(--gold-color); display: flex; flex-direction: column; align-items: center; gap: 15px; box-shadow: 0 0 20px black;">
+                      <h2 style="font-size: 1.2rem;" data-i18n="select_pickup_title">Select Pickup</h2>
+                      <div class="control-row">
+                          <div class="btn-wrapper">
+                              <span class="btn-label" data-i18n="btn_treasure">Treasure</span>
+                              <div class="btn btn-gold" onclick="Game.handleResourceChoice('gold')"></div>
+                          </div>
+                          <div class="btn-wrapper">
+                              <span class="btn-label" data-i18n="btn_resource">Resource</span>
+                              <div class="btn btn-valuable" onclick="Game.handleResourceChoice('valuable')"></div>
+                          </div>
+                      </div>
+                      <div class="btn-wrapper">
+                          <span class="btn-label" data-i18n="btn_artifact">Artifact</span>
+                          <div class="btn btn-artifact" onclick="Game.handleResourceChoice('artifact')"></div>
+                      </div>
+                  </div>
+              </div>
+              <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_battle">Battle</span><div class="btn btn-start" onclick="Game.startCombat()"></div></div>
+              <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_pickup">Pickup</span><div class="btn btn-resource" onclick="Game.handleResource()"></div></div>
+              <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_eliminate">Eliminate Player</span><div class="btn btn-eliminated" onclick="Game.askEliminate()"></div></div>
+              <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_end_turn">End Turn</span><div class="btn btn-endturn" onclick="Game.endTurn()"></div></div>
           </div>
-          <div id="resource-popup" style="display:none; position:absolute; inset:-25px; background:rgba(0,0,0,0.85); z-index:100; flex-direction:column; justify-content:center; align-items:center; border-radius:15px; border:2px solid var(--gold-color);">
-                <h2 style="font-size: 1.2rem;" data-i18n="select_pickup_title">Select Pickup</h2>
-                <div class="control-row">
-                    <div class="btn-wrapper">
-                        <span class="btn-label" data-i18n="btn_treasure">Treasure</span>
-                        <div class="btn btn-gold" onclick="Game.handleResourceChoice('gold')"></div>
-                    </div>
-                    <div class="btn-wrapper">
-                        <span class="btn-label" data-i18n="btn_resource">Resource</span>
-                        <div class="btn btn-valuable" onclick="Game.handleResourceChoice('valuable')"></div>
-                    </div>
-                </div>
-                <div class="btn-wrapper">
-                    <span class="btn-label" data-i18n="btn_artifact">Artifact</span>
-                    <div class="btn btn-artifact" onclick="Game.handleResourceChoice('artifact')"></div>
-                </div>
-          </div>
-          <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_battle">Battle</span><div class="btn btn-start" onclick="Game.startCombat()"></div></div>
-          <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_pickup">Pickup</span><div class="btn btn-resource" onclick="Game.handleResource()"></div></div>
-          <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_eliminate">Eliminate Player</span><div class="btn btn-eliminated" onclick="Game.askEliminate()"></div></div>
-          <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_end_turn">End Turn</span><div class="btn btn-endturn" onclick="Game.endTurn()"></div></div>
-      </div>
 
-      <!-- Theme Button Updated -->
-      <div class="horizontal-action-row">
-          <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_rules">Rules</span><div class="btn btn-rules" onclick="Game.showRules('screen-overworld')"></div></div>
-          <div class="btn-wrapper">
-              <span class="btn-label" data-i18n="btn_change_theme">Change Theme</span>
-              <!-- Image will be updated via JS to match current theme -->
-              <div id="btn-theme-toggle" class="btn" onclick="Game.openThemeSelector()"></div>
+          <!-- Theme Button Updated -->
+          <div class="horizontal-action-row">
+              <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_rules">Rules</span><div class="btn btn-rules" onclick="Game.showRules('screen-overworld')"></div></div>
+              <div class="btn-wrapper">
+                  <span class="btn-label" data-i18n="btn_change_theme">Change Theme</span>
+                  <!-- Image will be updated via JS to match current theme -->
+                  <div id="btn-theme-toggle" class="btn" onclick="Game.openThemeSelector()"></div>
+              </div>
           </div>
-      </div>
 
-      <div class="horizontal-action-row">
-          <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_win_scenario">Win Scenario</span><div class="btn btn-wingame" onclick="Game.winGame()"></div></div>
-          <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_lose_scenario">Lose Scenario</span><div class="btn btn-losegame" onclick="Game.loseGame()"></div></div>
-      </div>
+          <div class="horizontal-action-row">
+              <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_win_scenario">Win Scenario</span><div class="btn btn-wingame" onclick="Game.winGame()"></div></div>
+              <div class="btn-wrapper"><span class="btn-label" data-i18n="btn_lose_scenario">Lose Scenario</span><div class="btn btn-losegame" onclick="Game.loseGame()"></div></div>
+          </div>
+        </div>
     </div>
-  </div>
 
   <!-- 4.5: Theme Selector -->
   <div id="screen-theme-select" class="screen">
