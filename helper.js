@@ -82,13 +82,11 @@ const Localization = {
     lang: 'en', // Default
 
     init() {
-        // 1. Check LocalStorage
         const storedLang = localStorage.getItem('h3_lang');
         
         if (storedLang && TRANSLATIONS[storedLang]) {
             this.lang = storedLang;
         } else {
-            // 2. Fallback to Browser Detection
             const userLang = navigator.language || navigator.userLanguage; 
             const shortLang = userLang.split('-')[0];
             if (TRANSLATIONS[shortLang]) {
@@ -110,24 +108,15 @@ const Localization = {
             this.updateFlagUI();
             this.localizePage();
             
-            // --- DYNAMIC TEXT UPDATE ---
-            // Fix: Immediately refresh content that depends on game state
             if (typeof Game !== 'undefined' && Game.state.players.length > 0) {
                 const player = Game.state.players[Game.state.currentPlayerIndex];
                 if (player) {
-                    // 1. Update Overworld Title (e.g. "Player 1's Turn")
                     const titleEl = document.getElementById('overworld-title');
-                    if (titleEl) {
-                        titleEl.innerText = this.get('turn_title', player.name);
-                    }
+                    if (titleEl) titleEl.innerText = this.get('turn_title', player.name);
 
-                    // 2. Update Faction Subtitle (e.g. "Castle")
                     const factionEl = document.getElementById('overworld-faction-subtitle');
-                    if (factionEl) {
-                        factionEl.innerText = this.get(`faction_${player.faction}`);
-                    }
+                    if (factionEl) factionEl.innerText = this.get(`faction_${player.faction}`);
 
-                    // 3. Update Theme Selector Label if visible (e.g. "Castle (Town)")
                     const themeLabel = document.getElementById('theme-faction-label');
                     if (themeLabel) {
                         const factionName = this.get(`faction_${player.faction}`);
@@ -137,12 +126,10 @@ const Localization = {
                 }
             }
 
-            // Stats Update (if needed)
             if (document.getElementById('screen-stats').style.display !== 'none') {
                 Game.showStats(Game.state.statsViewIndex);
             }
             
-            // Close submenu if open
             const submenu = document.getElementById('lang-submenu');
             if (submenu) submenu.style.display = 'none';
         }
@@ -158,7 +145,7 @@ const Localization = {
         const submenu = document.getElementById('lang-submenu');
         if (!submenu) return;
         
-        submenu.innerHTML = ''; // Clear current
+        submenu.innerHTML = '';
         
         Object.keys(TRANSLATIONS).forEach(key => {
             const flag = LANG_FLAGS[key] || key.toUpperCase();
@@ -170,7 +157,6 @@ const Localization = {
         });
     },
 
-    // Get a string by key, optionally replacing placeholders {0}, {1}, etc.
     get(key, ...args) {
         let str = (TRANSLATIONS[this.lang] && TRANSLATIONS[this.lang][key]) 
                   ? TRANSLATIONS[this.lang][key] 
@@ -182,7 +168,6 @@ const Localization = {
         return str;
     },
 
-    // Update all HTML elements with data-i18n attribute
     localizePage() {
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
@@ -213,17 +198,21 @@ const Game = {
         tempPlayerName: "",
         isAutoplay: true,
         lastTerrain: null,
-        statsViewIndex: 0, // Which player stats are we looking at
-
-        // --- STATS SYSTEM STATE ---
+        statsViewIndex: 0,
+        
+        // --- EVENT BASED STATS SYSTEM ---
+        history: [], // The Timeline
+        appLoadedAt: 0,
+        
+        // Timer Logic
         timerMode: 'setup', // 'setup', 'overworld', 'battle', 'rules', 'paused', 'ended'
         lastTick: 0,
-        stats: {
-            appLoadedAt: 0,
-            setupTime: 0,
-            gameStartTime: 0,
-            gameEndTime: 0,
-            totalRulesTime: 0
+        // Active accumulators for the current ongoing event (reset after logging event)
+        activeDurations: {
+            setup: 0,
+            turn: 0,
+            battle: 0,
+            rules: 0
         }
     },
 
@@ -236,6 +225,58 @@ const Game = {
         fadeInterval: null,
         masterVolume: 1.0,
         isMuted: false
+    },
+
+    // --- LOGGING ENGINE ---
+    
+    // Core function to push events to history
+    logEvent(type, data = {}) {
+        const player = this.state.players[this.state.currentPlayerIndex];
+        const entry = {
+            timestamp: Date.now(),
+            type: type,
+            round: this.state.round,
+            // If we are in setup/pregame, player might be undefined
+            playerId: player ? player.id : null,
+            faction: player ? player.faction : null,
+            data: data
+        };
+        this.state.history.push(entry);
+    },
+
+    // --- TIMER ENGINE ---
+
+    // Calculate time since lastTick and add to correct accumulator
+    commitTime() {
+        if (!this.state.lastTick) return;
+        const now = Date.now();
+        const delta = now - this.state.lastTick;
+        this.state.lastTick = now;
+
+        if (delta <= 0) return;
+
+        // Add delta to the bucket corresponding to the current mode
+        switch (this.state.timerMode) {
+            case 'setup':
+                this.state.activeDurations.setup += delta;
+                break;
+            case 'overworld':
+                this.state.activeDurations.turn += delta;
+                break;
+            case 'battle':
+                this.state.activeDurations.battle += delta;
+                break;
+            case 'rules':
+                this.state.activeDurations.rules += delta;
+                break;
+            // 'paused' or 'ended' adds to nothing
+        }
+    },
+
+    setTimerMode(newMode) {
+        this.commitTime(); // Save progress of previous mode
+        this.state.timerMode = newMode;
+        this.state.lastTick = Date.now();
     },
 
     // --- AUDIO ENGINE ---
@@ -288,7 +329,7 @@ const Game = {
                     incoming.volume = Math.min(targetVol, incoming.volume + step);
                     isDone = false;
                 } else if (incoming.volume > targetVol) {
-                    incoming.volume = targetVol; // Clamp if user lowered slider mid-fade
+                    incoming.volume = targetVol;
                 }
 
                 if (outgoing.volume > 0) {
@@ -413,56 +454,11 @@ const Game = {
         loadNext();
     },
 
-    // --- TIMER / STATS LOGIC ---
-
-    commitTime() {
-        if (!this.state.lastTick) return;
-        const now = Date.now();
-        const delta = now - this.state.lastTick;
-        this.state.lastTick = now;
-
-        if (delta <= 0) return;
-
-        const mode = this.state.timerMode;
-        
-        if (mode === 'setup') {
-            this.state.stats.setupTime += delta;
-        } else if (mode === 'rules') {
-            this.state.stats.totalRulesTime += delta;
-        } else {
-            // Player related timers
-            const player = this.state.players[this.state.currentPlayerIndex];
-            if (!player) return;
-
-            if (mode === 'overworld') {
-                player.stats.currentTurnElapsed += delta;
-            } else if (mode === 'battle') {
-                player.stats.totalBattleTime += delta;
-            }
-        }
-    },
-
-    setTimerMode(mode) {
-        // Commit time for previous mode
-        this.commitTime();
-        // Set new mode
-        this.state.timerMode = mode;
-        this.state.lastTick = Date.now();
-    },
-
-    pushTurnStats() {
-        const player = this.state.players[this.state.currentPlayerIndex];
-        if (player) {
-            player.stats.turnHistory.push(player.stats.currentTurnElapsed);
-            player.stats.currentTurnElapsed = 0;
-        }
-    },
-
     // --- GAME LOGIC ---
 
     init() {
+        this.state.appLoadedAt = Date.now();
         this.state.lastTick = Date.now();
-        this.state.stats.appLoadedAt = Date.now();
         this.state.timerMode = 'setup';
 
         document.getElementById('click-overlay').style.display = 'none';
@@ -482,7 +478,6 @@ const Game = {
         if (isMobile) {
             if (menu.style.display === 'flex') {
                 menu.style.display = 'none';
-                // Close language submenu when closing main menu
                 document.getElementById('lang-submenu').style.display = 'none';
             } else {
                 menu.style.display = 'flex';
@@ -521,7 +516,6 @@ const Game = {
         if (!this.state.isAutoplay) return;
         if (this.state.currentScreen !== 'screen-overworld') return;
 
-        // Logic: Town -> Random Terrain -> Town -> Different Random Terrain
         const player = this.state.players[this.state.currentPlayerIndex];
         const faction = player.faction;
         
@@ -593,15 +587,7 @@ const Game = {
                         id: playerIndex, 
                         faction: faction, 
                         name: this.state.tempPlayerName,
-                        eliminated: false,
-                        // New Stats Struct
-                        stats: {
-                            turnHistory: [],
-                            currentTurnElapsed: 0,
-                            totalBattleTime: 0,
-                            combat: { wins: 0, losses: 0, retreats: 0, surrenders: 0 },
-                            loot: { gold: 0, valuable: 0, artifact: 0 }
-                        }
+                        eliminated: false
                     });
                     this.startFactionSelection(playerIndex + 1);
                 };
@@ -624,7 +610,9 @@ const Game = {
 
     startGame() {
         this.commitTime(); // Commit setup time
-        this.state.stats.gameStartTime = Date.now();
+        // Log setup end / Game Start
+        this.logEvent('GAME_START', { setupTime: this.state.activeDurations.setup });
+        
         this.state.round = 1;
         this.state.currentPlayerIndex = 0;
         this.startTurn(false); 
@@ -636,8 +624,8 @@ const Game = {
             this.state.musicTimer = null;
         }
         
-        // Timer Logic
         this.setTimerMode('overworld');
+        this.logEvent('TURN_START');
 
         const player = this.state.players[this.state.currentPlayerIndex];
         
@@ -720,7 +708,7 @@ const Game = {
     getCurrentOverworldMusic() {
         return `assets/${this.state.currentOverworldName}.mp3`;
     },
-    
+
     skipEventOverlay() {
         if (this.state.eventCallback) {
             const cb = this.state.eventCallback;
@@ -735,7 +723,10 @@ const Game = {
     endTurn() {
         // Commit turn time
         this.commitTime();
-        this.pushTurnStats(); // Save duration to array
+        // Log end with duration
+        this.logEvent('TURN_END', { duration: this.state.activeDurations.turn });
+        // Reset turn accumulator
+        this.state.activeDurations.turn = 0;
 
         let nextIndex = this.state.currentPlayerIndex;
         let loopCount = 0;
@@ -766,17 +757,20 @@ const Game = {
             nextRound++;
         }
 
-         let sfxToPlay = 'newday.mp3';
+        let sfxToPlay = 'newday.mp3';
         let overlayText = Localization.get('event_new_day');
         let image = "url('assets/newday.avif')";
+        let roundType = 'new_day';
 
         if (isNewRound) {
             if (nextRound % 2 === 0) {
                 sfxToPlay = 'newmonth.mp3';
                 overlayText = Localization.get('event_astrologers');
+                roundType = 'new_month';
             } else {
                 sfxToPlay = 'newweek.mp3';
                 overlayText = Localization.get('event_resource_round');
+                roundType = 'new_week';
             }
             image = "url('assets/newtime.avif')";
         }
@@ -787,6 +781,10 @@ const Game = {
         ol.style.backgroundImage = image;
         document.getElementById('event-text').innerHTML = overlayText;
         ol.style.display = 'flex';
+        
+        if (isNewRound) {
+            this.logEvent('ROUND_START', { roundType: roundType, newRoundNumber: nextRound });
+        }
 
         // Define the transition logic
         const proceed = () => {
@@ -808,14 +806,9 @@ const Game = {
 
     handleResourceChoice(type) {
         document.getElementById('resource-popup').style.display = 'none';
-
-        // Stats Update
-        const player = this.state.players[this.state.currentPlayerIndex];
-        if (player) {
-            if (type === 'gold') player.stats.loot.gold++;
-            if (type === 'valuable') player.stats.loot.valuable++;
-            if (type === 'artifact') player.stats.loot.artifact++;
-        }
+        
+        // Log pickup
+        this.logEvent('PICKUP', { type: type });
 
         this.audio.ch1.pause();
         this.audio.ch2.pause();
@@ -844,7 +837,10 @@ const Game = {
 
     startCombat() {
         this.stopBg();
-        this.setTimerMode('battle'); // Timer Switch
+        
+        // Switch to Battle Timer
+        this.setTimerMode('battle'); 
+        this.logEvent('BATTLE_START');
 
         document.getElementById('combat-title').innerText = Localization.get('combat_title', this.state.players[this.state.currentPlayerIndex].name);
 
@@ -871,31 +867,30 @@ const Game = {
     },
 
     combatVictory() {
-        this.state.players[this.state.currentPlayerIndex].stats.combat.wins++;
-        this.stopBg();
-        this.showCombatOverlay(Localization.get('msg_victory'), "assets/victory.avif");
-        this.playSfx('win_battle.mp3', () => this.returnToOverworld());
+        this.finishCombat('win', Localization.get('msg_victory'), "assets/victory.avif", 'win_battle.mp3');
     },
 
     combatRetreat() {
-        this.state.players[this.state.currentPlayerIndex].stats.combat.retreats++;
-        this.stopBg();
-        this.showCombatOverlay(Localization.get('msg_retreat'), "assets/retreat.avif");
-        this.playSfx('retreat.mp3', () => this.returnToOverworld());
+        this.finishCombat('retreat', Localization.get('msg_retreat'), "assets/retreat.avif", 'retreat.mp3');
     },
 
     combatSurrender() {
-        this.state.players[this.state.currentPlayerIndex].stats.combat.surrenders++;
-        this.stopBg();
-        this.showCombatOverlay(Localization.get('msg_surrender'), "assets/surrender.avif");
-        this.playSfx('surrender.mp3', () => this.returnToOverworld());
+        this.finishCombat('surrender', Localization.get('msg_surrender'), "assets/surrender.avif", 'surrender.mp3');
     },
 
     combatLose() {
-        this.state.players[this.state.currentPlayerIndex].stats.combat.losses++;
+        this.finishCombat('loss', Localization.get('msg_defeat'), "assets/eliminated.avif", 'lose.mp3');
+    },
+
+    finishCombat(result, text, bgImageUrl, sfxFile) {
+        // Commit battle time
+        this.commitTime();
+        this.logEvent('BATTLE_END', { result: result, duration: this.state.activeDurations.battle });
+        this.state.activeDurations.battle = 0;
+
         this.stopBg();
-        this.showCombatOverlay(Localization.get('msg_defeat'), "assets/eliminated.avif");
-        this.playSfx('lose.mp3', () => this.returnToOverworld());
+        this.showCombatOverlay(text, bgImageUrl);
+        this.playSfx(sfxFile, () => this.returnToOverworld());
     },
 
     showCombatOverlay(text, bgImageUrl) {
@@ -911,7 +906,7 @@ const Game = {
     },
 
     returnToOverworld() {
-        this.setTimerMode('overworld'); // Timer Switch back
+        this.setTimerMode('overworld');
         this.state.trackPositions = {};
         this.audio.sfx.pause();
         this.audio.sfx.onended = null;
@@ -927,7 +922,8 @@ const Game = {
         this.state.previousMusic = this.audio.currentBgUrl;
         this.state.previousTimerMode = this.state.timerMode;
         
-        this.setTimerMode('rules'); // Switch to global rules timer
+        this.setTimerMode('rules');
+        this.logEvent('RULES_START', { fromScreen: fromScreen });
 
         let introNum;
         do {
@@ -941,7 +937,11 @@ const Game = {
     },
 
     exitRules() {
-        this.setTimerMode(this.state.previousTimerMode); // Restore previous timer mode
+        this.commitTime();
+        this.logEvent('RULES_END', { duration: this.state.activeDurations.rules });
+        this.state.activeDurations.rules = 0;
+
+        this.setTimerMode(this.state.previousTimerMode);
         this.showScreen(this.state.previousScreen);
         if (this.state.currentScreen === 'screen-overworld') {
             const shouldLoop = !this.state.isAutoplay;
@@ -980,6 +980,8 @@ const Game = {
             } else if (action === 'eliminate') {
                 const player = this.state.players[this.state.currentPlayerIndex];
                 player.eliminated = true;
+                this.logEvent('ELIMINATED');
+
                 const activePlayers = this.state.players.filter(p => !p.eliminated);
                 if (activePlayers.length === 0) {
                     this.state.statsViewIndex = this.state.currentPlayerIndex;
@@ -992,8 +994,8 @@ const Game = {
     },
 
     finishGameSequence(imgUrl, titleText, audioUrl, loop) {
-        this.commitTime(); // Final time commit
-        this.state.stats.gameEndTime = Date.now();
+        this.commitTime();
+        this.logEvent('GAME_END', { winner: titleText });
         this.state.timerMode = 'ended';
 
         if (this.audio.fadeInterval) clearInterval(this.audio.fadeInterval);
@@ -1028,10 +1030,83 @@ const Game = {
     
     // Format ms to "Xm Ys"
     fmtTime(ms) {
+        if (!ms || ms < 0) ms = 0;
         const totalSeconds = Math.floor(ms / 1000);
         const mins = Math.floor(totalSeconds / 60);
         const secs = totalSeconds % 60;
         return Localization.get('time_fmt_m_s', mins, secs);
+    },
+
+    // Calculate aggregated stats from the Event History on the fly
+    calculateStatsFromHistory() {
+        const stats = {
+            global: {
+                setupTime: 0,
+                totalGameTime: 0,
+                rulesTime: 0
+            },
+            players: {}
+        };
+
+        // Initialize player entries
+        this.state.players.forEach(p => {
+            stats.players[p.id] = {
+                turnDurations: [],
+                battleTime: 0,
+                combat: { wins: 0, losses: 0, retreats: 0, surrenders: 0 },
+                loot: { gold: 0, valuable: 0, artifact: 0 }
+            };
+        });
+
+        let gameStartTime = 0;
+        let gameEndTime = Date.now(); // Default to now if not ended
+
+        this.state.history.forEach(ev => {
+            if (ev.type === 'GAME_START') {
+                gameStartTime = ev.timestamp;
+                if (ev.data && ev.data.setupTime) stats.global.setupTime = ev.data.setupTime;
+            }
+            if (ev.type === 'GAME_END') {
+                gameEndTime = ev.timestamp;
+            }
+            if (ev.type === 'RULES_END') {
+                stats.global.rulesTime += (ev.data.duration || 0);
+            }
+            
+            // Player Specific
+            if (ev.playerId !== null && stats.players[ev.playerId]) {
+                const pStat = stats.players[ev.playerId];
+                
+                if (ev.type === 'TURN_END') {
+                    pStat.turnDurations.push(ev.data.duration || 0);
+                }
+                if (ev.type === 'BATTLE_END') {
+                    pStat.battleTime += (ev.data.duration || 0);
+                    const res = ev.data.result;
+                    if (res === 'win') pStat.combat.wins++;
+                    else if (res === 'loss') pStat.combat.losses++;
+                    else if (res === 'retreat') pStat.combat.retreats++;
+                    else if (res === 'surrender') pStat.combat.surrenders++;
+                }
+                if (ev.type === 'PICKUP') {
+                    const t = ev.data.type;
+                    if (t === 'gold') pStat.loot.gold++;
+                    else if (t === 'valuable') pStat.loot.valuable++;
+                    else if (t === 'artifact') pStat.loot.artifact++;
+                }
+            }
+        });
+
+        if (gameStartTime > 0) {
+            stats.global.totalGameTime = gameEndTime - gameStartTime;
+        } else {
+            // If viewing stats before game starts
+            stats.global.totalGameTime = 0;
+            // Approximate setup time if not logged yet
+            stats.global.setupTime = Date.now() - this.state.appLoadedAt; 
+        }
+
+        return stats;
     },
 
     showStats(playerIdx) {
@@ -1042,19 +1117,19 @@ const Game = {
 
         const player = this.state.players[playerIdx];
 
-        // 1. Set Background & Header
+        // 1. Calculate Data
+        const data = this.calculateStatsFromHistory();
+        const pData = data.players[player.id];
+
+        // 2. Set Background & Header
         this.updateFactionColor(player.faction);
         
-        // 2. Global Stats
-        const setupT = this.state.stats.setupTime;
-        const totalGameT = (this.state.stats.gameEndTime || Date.now()) - this.state.stats.gameStartTime;
-        const rulesT = this.state.stats.totalRulesTime;
+        // 3. Global Stats UI
+        document.getElementById('stat-setup').innerText = this.fmtTime(data.global.setupTime);
+        document.getElementById('stat-game-total').innerText = this.fmtTime(data.global.totalGameTime);
+        document.getElementById('stat-rules').innerText = this.fmtTime(data.global.rulesTime);
 
-        document.getElementById('stat-setup').innerText = this.fmtTime(setupT);
-        document.getElementById('stat-game-total').innerText = this.fmtTime(totalGameT);
-        document.getElementById('stat-rules').innerText = this.fmtTime(rulesT);
-
-        // 3. Player Card
+        // 4. Player Card UI
         document.getElementById('stat-p-name').innerText = player.name;
         document.getElementById('stat-p-faction').innerText = Localization.get(`faction_${player.faction}`);
         const pImg = document.getElementById('stat-p-img');
@@ -1065,27 +1140,24 @@ const Game = {
         let fastestTurn = Infinity;
         let slowestTurn = 0;
         
-        // Include current partial turn if game not over?
-        // Usually turnHistory holds completed turns. 
-        const turns = player.stats.turnHistory;
-        turns.forEach(t => {
+        pData.turnDurations.forEach(t => {
             totalTurnTime += t;
             if (t < fastestTurn) fastestTurn = t;
             if (t > slowestTurn) slowestTurn = t;
         });
 
-        const avgTurn = turns.length > 0 ? (totalTurnTime / turns.length) : 0;
+        const avgTurn = pData.turnDurations.length > 0 ? (totalTurnTime / pData.turnDurations.length) : 0;
         
         document.getElementById('stat-avg-turn').innerText = this.fmtTime(avgTurn);
-        document.getElementById('stat-battle-total').innerText = this.fmtTime(player.stats.totalBattleTime);
+        document.getElementById('stat-battle-total').innerText = this.fmtTime(pData.battleTime);
         
         // Highlights
         document.getElementById('stat-fast-turn').innerText = fastestTurn === Infinity ? "-" : this.fmtTime(fastestTurn);
         document.getElementById('stat-slow-turn').innerText = slowestTurn === 0 ? "-" : this.fmtTime(slowestTurn);
 
         // Counters
-        const c = player.stats.combat;
-        const l = player.stats.loot;
+        const c = pData.combat;
+        const l = pData.loot;
         document.getElementById('stat-combat-rec').innerText = `${c.wins} / ${c.losses} / ${c.retreats} / ${c.surrenders}`;
         document.getElementById('stat-loot-rec').innerText = `${l.gold} / ${l.valuable} / ${l.artifact}`;
 
@@ -1102,23 +1174,20 @@ const Game = {
             exportDate: now.toLocaleDateString(),
             exportTime: now.toLocaleTimeString(),
             rawTimestamp: now.toISOString(),
-            global: {
-                setupTimeMs: this.state.stats.setupTime,
-                totalGameTimeMs: (this.state.stats.gameEndTime || Date.now()) - this.state.stats.gameStartTime,
-                rulesTimeMs: this.state.stats.totalRulesTime
-            },
+            // Export the raw history now
+            history: this.state.history,
+            // Also export player metadata for context
             players: this.state.players.map(p => ({
+                id: p.id,
                 name: p.name,
                 faction: p.faction,
-                eliminated: p.eliminated,
-                stats: p.stats
+                eliminated: p.eliminated
             }))
         };
 
         const jsonStr = JSON.stringify(data, null, 2);
-        const fileName = `${now.toISOString().split('T')[0]}_${now.getHours()}-${now.getMinutes()}_h3data.json`;
+        const fileName = `${now.toISOString().split('T')[0]}_${now.getHours()}-${now.getMinutes()}_h3timeline.json`;
 
-        // Check if we are on mobile with share capabilities
         if (navigator.share && navigator.canShare) {
             const blob = new Blob([jsonStr], { type: 'application/json' });
             const file = new File([blob], fileName, { type: 'application/json' });
@@ -1126,13 +1195,12 @@ const Game = {
             if (navigator.canShare({ files: [file] })) {
                 navigator.share({
                     files: [file],
-                    title: 'HoMM3 Statistics',
+                    title: 'HoMM3 Timeline Stats',
                 }).catch(() => this.downloadDesktop(jsonStr, fileName));
                 return;
             }
         }
 
-        // Default Desktop / Fallback Download
         this.downloadDesktop(jsonStr, fileName);
     },
 
@@ -1159,13 +1227,9 @@ const Game = {
         this.state.playerCount = 3;
         
         // Reset Stats State
-        this.state.stats = {
-            appLoadedAt: Date.now(),
-            setupTime: 0,
-            gameStartTime: 0,
-            gameEndTime: 0,
-            totalRulesTime: 0
-        };
+        this.state.history = [];
+        this.state.activeDurations = { setup: 0, turn: 0, battle: 0, rules: 0 };
+        this.state.appLoadedAt = Date.now();
         this.state.lastTick = Date.now();
         this.state.timerMode = 'setup';
 
@@ -1179,9 +1243,7 @@ const Game = {
         this.audio.currentBgUrl = null;
         this.state.trackPositions = {};
 
-        // Close options if open on mobile
         document.getElementById('options-menu').style.display = ''; 
-        // Close language menu if open
         const langMenu = document.getElementById('lang-submenu');
         if(langMenu) langMenu.style.display = 'none';
 
