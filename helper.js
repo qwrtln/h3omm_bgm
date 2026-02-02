@@ -66,26 +66,111 @@ const ASSET_QUEUE = [
     'assets/water.avif', 'assets/wasteland.avif'
 ];
 
+const LANG_FLAGS = {
+    'en': '🇬🇧', 
+    'cs': '🇨🇿', 
+    'de': '🇩🇪', 
+    'es': '🇪🇸',
+    'fr': '🇫🇷', 
+    'he': '🇮🇱', 
+    'pl': '🇵🇱', 
+    'ru': '🇷🇺', 
+    'ua': '🇺🇦'
+};
+
 const Localization = {
     lang: 'en', // Default
 
     init() {
-        // Detect browser language (e.g., "en-US" -> "en")
-        const userLang = navigator.language || navigator.userLanguage; 
-        const shortLang = userLang.split('-')[0];
+        // 1. Check LocalStorage
+        const storedLang = localStorage.getItem('h3_lang');
         
-        if (TRANSLATIONS[shortLang]) {
-            this.lang = shortLang;
+        if (storedLang && TRANSLATIONS[storedLang]) {
+            this.lang = storedLang;
         } else {
-            this.lang = 'en'; // Fallback
+            // 2. Fallback to Browser Detection
+            const userLang = navigator.language || navigator.userLanguage; 
+            const shortLang = userLang.split('-')[0];
+            if (TRANSLATIONS[shortLang]) {
+                this.lang = shortLang;
+            } else {
+                this.lang = 'en';
+            }
         }
         
+        this.updateFlagUI();
+        this.renderLanguageMenu();
         this.localizePage();
+    },
+
+    setLang(newLang) {
+        if (TRANSLATIONS[newLang]) {
+            this.lang = newLang;
+            localStorage.setItem('h3_lang', newLang);
+            this.updateFlagUI();
+            this.localizePage();
+            
+            // --- DYNAMIC TEXT UPDATE ---
+            // Fix: Immediately refresh content that depends on game state
+            if (typeof Game !== 'undefined' && Game.state.players.length > 0) {
+                const player = Game.state.players[Game.state.currentPlayerIndex];
+                if (player) {
+                    // 1. Update Overworld Title (e.g. "Player 1's Turn")
+                    const titleEl = document.getElementById('overworld-title');
+                    if (titleEl) {
+                        titleEl.innerText = this.get('turn_title', player.name);
+                    }
+
+                    // 2. Update Faction Subtitle (e.g. "Castle")
+                    const factionEl = document.getElementById('overworld-faction-subtitle');
+                    if (factionEl) {
+                        factionEl.innerText = this.get(`faction_${player.faction}`);
+                    }
+
+                    // 3. Update Theme Selector Label if visible (e.g. "Castle (Town)")
+                    const themeLabel = document.getElementById('theme-faction-label');
+                    if (themeLabel) {
+                        const factionName = this.get(`faction_${player.faction}`);
+                        const townLabel = this.get('btn_town');
+                        themeLabel.innerText = `${factionName} (${townLabel})`;
+                    }
+                }
+            }
+            
+            // Close submenu if open
+            const submenu = document.getElementById('lang-submenu');
+            if (submenu) submenu.style.display = 'none';
+        }
+    },
+
+    updateFlagUI() {
+        const flagIcon = LANG_FLAGS[this.lang] || '🌐';
+        const btn = document.getElementById('current-lang-icon');
+        if (btn) btn.innerText = flagIcon;
+    },
+
+    renderLanguageMenu() {
+        const submenu = document.getElementById('lang-submenu');
+        if (!submenu) return;
+        
+        submenu.innerHTML = ''; // Clear current
+        
+        Object.keys(TRANSLATIONS).forEach(key => {
+            const flag = LANG_FLAGS[key] || key.toUpperCase();
+            const div = document.createElement('div');
+            div.className = 'lang-option';
+            div.innerText = flag;
+            div.onclick = () => this.setLang(key);
+            submenu.appendChild(div);
+        });
     },
 
     // Get a string by key, optionally replacing placeholders {0}, {1}, etc.
     get(key, ...args) {
-        let str = TRANSLATIONS[this.lang][key] || key;
+        let str = (TRANSLATIONS[this.lang] && TRANSLATIONS[this.lang][key]) 
+                  ? TRANSLATIONS[this.lang][key] 
+                  : (TRANSLATIONS['en'][key] || key);
+
         args.forEach((arg, index) => {
             str = str.replace(`{${index}}`, arg);
         });
@@ -96,8 +181,9 @@ const Localization = {
     localizePage() {
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
-            if (TRANSLATIONS[this.lang][key]) {
-                el.innerHTML = TRANSLATIONS[this.lang][key];
+            const translation = this.get(key);
+            if (translation) {
+                el.innerHTML = translation;
             }
         });
     }
@@ -179,7 +265,7 @@ const Game = {
             this.audio.fadeInterval = setInterval(() => {
                 const step = 0.05;
                 let isDone = true;
-                const targetVol = this.audio.masterVolume; // Dynamic target
+                const targetVol = this.audio.masterVolume;
 
                 if (incoming.volume < targetVol) {
                     incoming.volume = Math.min(targetVol, incoming.volume + step);
@@ -284,8 +370,6 @@ const Game = {
         const volume = parseFloat(val);
         this.audio.masterVolume = volume;
         this.audio.sfx.volume = volume;
-        // Update music channels
-        // If we are NOT fading, set them to master volume immediately.
         if (!this.audio.fadeInterval) {
             this.audio.ch1.volume = volume;
             this.audio.ch2.volume = volume;
@@ -321,12 +405,10 @@ const Game = {
         this.updateFactionColor('neutral');
         this.initPreloader(); 
 
-        // Setup Autoplay Listeners
         this.audio.ch1.onended = () => this.handleAudioEnd();
         this.audio.ch2.onended = () => this.handleAudioEnd();
     },
 
-    // Options Menu Handlers
     toggleOptionsMenu() {
         const menu = document.getElementById('options-menu');
         const isMobile = window.innerWidth <= 1024;
@@ -334,10 +416,18 @@ const Game = {
         if (isMobile) {
             if (menu.style.display === 'flex') {
                 menu.style.display = 'none';
+                // Close language submenu when closing main menu
+                document.getElementById('lang-submenu').style.display = 'none';
             } else {
                 menu.style.display = 'flex';
             }
         }
+    },
+
+    toggleLanguageMenu() {
+        const submenu = document.getElementById('lang-submenu');
+        const isHidden = submenu.style.display === 'none' || submenu.style.display === '';
+        submenu.style.display = isHidden ? 'grid' : 'none';
     },
 
     toggleAutoplay() {
@@ -346,8 +436,6 @@ const Game = {
         
         if (this.state.isAutoplay) {
             btn.classList.add('active');
-            
-            // If in overworld, trigger cycle start immediately if current song is looping
             if (this.state.currentScreen === 'screen-overworld') {
                 const active = this.audio[this.audio.activeChannel];
                 if (active && active.loop) {
@@ -356,7 +444,6 @@ const Game = {
             }
         } else {
             btn.classList.remove('active');
-            // If in overworld, set current track to loop
             if (this.state.currentScreen === 'screen-overworld') {
                 const active = this.audio[this.audio.activeChannel];
                 if (active) active.loop = true;
@@ -374,7 +461,6 @@ const Game = {
         
         let nextTheme = '';
 
-        // If currently playing the faction town, switch to terrain
         if (this.state.currentOverworldName === faction) {
             let nextTerrain;
             do {
@@ -385,7 +471,6 @@ const Game = {
             this.state.lastTerrain = nextTerrain;
             nextTheme = nextTerrain;
         } else {
-            // Otherwise (playing terrain or manual override), go back to town
             nextTheme = faction;
         }
 
@@ -394,7 +479,7 @@ const Game = {
         const nextUrl = `assets/${nextTheme}.mp3`;
         this.state.trackPositions[nextUrl] = 0;
 
-        this.playBg(nextUrl, true, false); // Play next, no loop
+        this.playBg(nextUrl, true, false); 
     },
 
     updateFactionColor(faction) {
@@ -484,7 +569,6 @@ const Game = {
         this.state.trackPositions = {};
         this.state.currentOverworldName = player.faction;
         
-        // Update UI
         document.getElementById('overworld-title').innerText = Localization.get('turn_title', player.name);
         
         const factionKey = `faction_${player.faction}`;
@@ -496,10 +580,8 @@ const Game = {
         this.showScreen('screen-overworld');
         
         const overworldMusic = `assets/${this.state.currentOverworldName}.mp3`;
-        // If autoplay is ON, do NOT loop, so it hits 'ended' event and cycles.
         const shouldLoop = !this.state.isAutoplay;
 
-        // If autoplay is ON, ensure the track starts from 0 (in case it finished previously)
         if (this.state.isAutoplay) {
              this.state.trackPositions[overworldMusic] = 0;
         }
@@ -534,13 +616,10 @@ const Game = {
         this.showScreen('screen-theme-select');
     },
 
-    // Called when a button on screen-theme-select is clicked
     applyThemeSelection(themeName) {
         this.state.currentOverworldName = themeName;
         this.updateThemeButtonUI();
         
-        // Manual override. If autoplay is ON, play this once (no loop), 
-        // then the event listener will pick up and return to pattern (Town)
         const shouldLoop = !this.state.isAutoplay;
         const url = `assets/${themeName}.mp3`;
         
@@ -548,19 +627,13 @@ const Game = {
              this.state.trackPositions[url] = 0;
         }
 
-        // Switch Music immediately
         this.playBg(url, true, shouldLoop);
-        
-        // Go back
         this.showScreen('screen-overworld');
     },
 
     updateThemeButtonUI() {
         const btn = document.getElementById('btn-theme-toggle');
         const currentName = this.state.currentOverworldName;
-        
-        // Always "Change Theme"
-        // Image matches current theme (faction or terrain)
         btn.style.backgroundImage = `url('assets/${currentName}.avif')`;
     },
 
@@ -569,21 +642,16 @@ const Game = {
     },
 
     endTurn() {
-        // Find next non-eliminated player
         let nextIndex = this.state.currentPlayerIndex;
         let loopCount = 0;
         let found = false;
         let nextRound = this.state.round;
         let isNewRound = false;
 
-        // Loop until we find a valid player or traverse the whole list
         while(loopCount < this.state.players.length) {
             nextIndex++;
-            // Wrap around
             if (nextIndex >= this.state.players.length) {
                 nextIndex = 0;
-                // Only increment round if we actually wrapped from last player to first
-                // But we need to be careful not to increment multiple times in recursion
                 isNewRound = true;
             }
 
@@ -594,12 +662,7 @@ const Game = {
             loopCount++;
         }
 
-        // If everyone is eliminated, something is wrong, or logic handled elsewhere.
-        // If only 1 player remains, we might want to check for auto-win?
-        // But prompt says if single player remains and is eliminated -> defeat.
-
         if (!found) {
-            // Everyone is eliminated (should normally trigger defeat via confirmElimination)
             this.finishGameSequence('assets/lose.avif', 'Defeat', 'assets/ultimatelose.mp3', false);
             return;
         }
@@ -644,7 +707,6 @@ const Game = {
     handleResourceChoice(type) {
         document.getElementById('resource-popup').style.display = 'none';
 
-        // Pause background
         this.audio.ch1.pause();
         this.audio.ch2.pause();
 
@@ -739,7 +801,6 @@ const Game = {
         this.hideCombatOverlay();
         this.showScreen('screen-overworld');
         
-        // Resume autoplay cycle or loop depending on state
         const shouldLoop = !this.state.isAutoplay;
         this.playBg(this.getCurrentOverworldMusic(), true, shouldLoop);
     },
@@ -852,6 +913,9 @@ const Game = {
 
         // Close options if open on mobile
         document.getElementById('options-menu').style.display = ''; 
+        // Close language menu if open
+        const langMenu = document.getElementById('lang-submenu');
+        if(langMenu) langMenu.style.display = 'none';
 
         setTimeout(() => this.init(), 100);
     },

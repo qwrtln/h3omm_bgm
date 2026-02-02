@@ -202,6 +202,41 @@
     .toggle-btn.active { background: #28a745; border-color: #28a745; }
     .toggle-btn.active::after { left: 26px; background: white; }
 
+    /* Language Selection */
+    .lang-wrapper {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        border-top: 1px solid #444; padding-top: 15px; width: 100%; position: relative;
+    }
+    #lang-btn {
+        font-size: 1.8rem; cursor: pointer; filter: drop-shadow(0 0 2px gold);
+        transition: transform 0.2s;
+    }
+    #lang-btn:active { transform: scale(0.9); }
+
+    #lang-submenu {
+        display: none; /* Toggled via JS */
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+        background: #222;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #444;
+    }
+
+    .lang-option {
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 5px;
+        background: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+    .lang-option:hover { background: #555; }
+
     /* Github Link */
     .github-link { margin-top: 5px; font-size: 0.85rem; color: #BF953F; text-decoration: none; border-bottom: 1px dashed #BF953F; padding-bottom: 2px; }
     .github-link:hover { color: white; border-color: white; }
@@ -226,6 +261,18 @@
         .slider-container { width: 30px; height: 150px; }
         #volume-slider { width: 150px; height: 30px; transform: rotate(-90deg); transform-origin: center; }
         .autoplay-label { font-size: 0.7rem; }
+        
+        /* Desktop Lang Menu pops out to the left */
+        #lang-submenu {
+            position: absolute;
+            right: 80px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 150px;
+            margin-top: 0;
+            box-shadow: 0 0 10px black;
+            border: 1px solid #BF953F;
+        }
     }
 
     /* Mobile View (Overlay) */
@@ -242,6 +289,7 @@
             border: none;
             box-shadow: none;
             border-radius: 0;
+            overflow-y: auto; /* Allow scrolling if menu is tall */
         }
 
         .vol-wrapper {
@@ -258,6 +306,10 @@
         .toggle-btn { width: 60px; height: 32px; border-radius: 16px; }
         .toggle-btn::after { width: 24px; height: 24px; top: 2px; left: 2px; }
         .toggle-btn.active::after { left: 30px; }
+
+        /* Mobile Lang Menu is inline */
+        .lang-wrapper { width: 80%; }
+        #lang-submenu { width: 100%; box-sizing: border-box; }
     }
 
   </style>
@@ -501,6 +553,16 @@
           </div>
       </div>
 
+      <!-- Language Toggle -->
+      <div class="lang-wrapper">
+        <div id="lang-btn" onclick="Game.toggleLanguageMenu()">
+            <span id="current-lang-icon">🌐</span>
+        </div>
+        <div id="lang-submenu">
+            <!-- Populated by JS -->
+        </div>
+      </div>
+
       <div class="autoplay-container">
           <span class="autoplay-label" data-i18n="btn_autoplay">Autoplay Overworld Music</span>
           <div id="autoplay-toggle" class="toggle-btn active" onclick="Game.toggleAutoplay()"></div>
@@ -516,7 +578,7 @@
     function updateCount(delta) {
         currentPlayerCount += delta;
         if (currentPlayerCount < 1) currentPlayerCount = 1;
-        if (currentPlayerCount > 10) currentPlayerCount = 10;
+        if (currentPlayerCount > 11) currentPlayerCount = 11;
         document.getElementById('p-count-display').innerText = currentPlayerCount;
     }
   </script>
