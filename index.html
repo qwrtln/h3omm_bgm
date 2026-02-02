@@ -133,6 +133,32 @@
     .btn-lose { background-image: url('assets/eliminated.avif'); }
     .btn-confirm { background-color: #28a745; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
     .btn.disabled { filter: brightness(0.4); cursor: not-allowed; pointer-events: none; border-color: #333; }
+    
+    /* Stats Screen Styles */
+    .stats-container {
+        display: flex; flex-direction: column; width: 100%; max-width: 500px;
+        background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 15px; border: 1px solid #444; max-height: 85vh; overflow-y: auto; gap: 2px;
+    }
+    .stats-container h2 { margin: 4px 0 2px 0; font-size: 0.95rem; border-bottom: 1px solid rgba(255,255,255,0.3); text-align: left; }
+
+    .stats-table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+    .stats-table th { text-align: left; color: var(--gold-color); font-size: 0.85rem; padding: 2px 0; }
+    .stats-table td { text-align: right; font-size: 0.95rem; padding: 2px 0; }
+    .stat-card-header { display: flex; align-items: center; gap: 12px; margin-top: 5px; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #444; }
+    .stat-faction-icon { width: 44px; height: 44px; border-radius: 50%; background-size: cover; border: 2px solid var(--gold-color); flex-shrink: 0; }
+    .stat-player-info { display: flex; flex-direction: column; line-height: 1.2; }
+    .stat-player-name { font-weight: bold; font-size: 1.1rem; }
+    .stat-player-faction { font-size: 0.8rem; color: #ccc; }
+    .stats-nav { 
+        display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 5px; padding-top: 5px; border-top: 1px solid #444;
+    }
+    .nav-arrow { font-size: 1.8rem; cursor: pointer; color: var(--gold-color); user-select: none; padding: 0 15px; }
+    .nav-arrow:active { transform: scale(0.9); }
+    .export-btn { 
+        padding: 6px 15px; background: #333; border: 1px solid var(--gold-color); color: white; border-radius: 5px; cursor: pointer; 
+    }
+    .export-btn:active { background: #555; }
+    
     @media (max-width: 430px) { :root { --btn-size: 110px; } .grid-3col .btn { height: 90px; } .grid-3col .btn-wrapper { width: 90px; } }
     @media (max-width: 350px) { :root { --btn-size: 95px; } .grid-3col .btn { height: 80px; } .grid-3col .btn-wrapper { width: 80px; } }
     @media (max-height: 700px) { .screen { gap: 8px; } h1,h2 { font-size: 1.4rem; } }
@@ -520,9 +546,63 @@
   <!-- SCREEN 7: Win/Lose Result -->
   <div id="screen-win" class="screen">
       <h1 id="endgame-title" data-i18n="victory_title">Victory!</h1>
-      <div class="btn-wrapper">
-          <span class="btn-label" data-i18n="btn_new_game">New Game</span>
-          <div id="win-theme-btn" class="btn" style="transform: scale(1.5);" onclick="Game.resetGame()"></div>
+      <div class="grid-2x2" style="justify-items: center;">
+          <div class="btn-wrapper">
+              <span class="btn-label" data-i18n="btn_new_game">New Game</span>
+              <div id="win-theme-btn" class="btn" onclick="Game.resetGame()"></div>
+          </div>
+          <div class="btn-wrapper">
+             <span class="btn-label" data-i18n="btn_view_stats">Stats</span>
+             <div class="btn btn-resource" onclick="Game.showStats(Game.state.statsViewIndex)"></div>
+         </div>
+      </div>
+  </div>
+
+  <!-- SCREEN 8: Statistics -->
+  <div id="screen-stats" class="screen">
+      <h1 data-i18n="screen_stats_title">Mission Stats</h1>
+      
+      <div class="stats-container">
+          <!-- Global Section -->
+          <h2 style="font-size: 1rem; border-bottom: 1px solid white;" data-i18n="stat_global_header">Global</h2>
+          <table class="stats-table">
+              <tr><th data-i18n="stat_setup_time">Setup Time</th><td id="stat-setup">0m 0s</td></tr>
+              <tr><th data-i18n="stat_game_time">Total Time</th><td id="stat-game-total">0m 0s</td></tr>
+              <tr><th data-i18n="stat_rules_time">Rules Time</th><td id="stat-rules">0m 0s</td></tr>
+          </table>
+
+          <!-- Player Section -->
+          <h2 style="font-size: 1rem; border-bottom: 1px solid white;" data-i18n="stat_player_header">Player</h2>
+          <div class="stat-card-header">
+              <div id="stat-p-img" class="stat-faction-icon"></div>
+              <div class="stat-player-info">
+                  <span id="stat-p-name" class="stat-player-name">Player 1</span>
+                  <span id="stat-p-faction" class="stat-player-faction">Castle</span>
+              </div>
+          </div>
+
+          <table class="stats-table">
+              <tr><th data-i18n="stat_avg_turn">Avg Turn</th><td id="stat-avg-turn">0m 0s</td></tr>
+              <tr><th data-i18n="stat_total_battle">Battle Time</th><td id="stat-battle-total">0m 0s</td></tr>
+              <tr><th data-i18n="stat_combat_record">Combat (W/L/R/S)</th><td id="stat-combat-rec">0 / 0 / 0 / 0</td></tr>
+              <tr><th data-i18n="stat_loot">Loot (Gold/Res/Art)</th><td id="stat-loot-rec">0 / 0 / 0</td></tr>
+          </table>
+
+          <table class="stats-table" style="margin-top: 10px;">
+              <tr><th data-i18n="stat_highlight_fastest">Fastest Turn</th><td id="stat-fast-turn" style="color:#7fff7f;">-</td></tr>
+              <tr><th data-i18n="stat_highlight_slowest">Longest Turn</th><td id="stat-slow-turn" style="color:#ff7f7f;">-</td></tr>
+          </table>
+
+          <div class="stats-nav">
+              <div class="nav-arrow" onclick="Game.cycleStatsPlayer(-1)">&lt;</div>
+              <button class="export-btn" data-i18n="btn_export_data" onclick="Game.exportStats()">Export Data</button>
+              <div class="nav-arrow" onclick="Game.cycleStatsPlayer(1)">&gt;</div>
+          </div>
+      </div>
+
+      <div class="btn-wrapper" style="margin-top: 10px;">
+          <span class="btn-label" data-i18n="btn_back">Back</span>
+          <div class="btn btn-rules" onclick="Game.showScreen('screen-win')"></div>
       </div>
   </div>
 

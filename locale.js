@@ -83,7 +83,24 @@ const TRANSLATIONS = {
         "msg_defeat": "Defeat",
         "msg_victory": "Victory",
         "msg_retreat": "Retreat",
-        "msg_surrender": "Surrender"
+        "msg_surrender": "Surrender",
+
+        // --- Stats Strings ---
+        "btn_view_stats": "View Statistics",
+        "btn_export_data": "Export Data",
+        "screen_stats_title": "Mission Statistics",
+        "stat_setup_time": "Setup Time",
+        "stat_game_time": "Total Game Time",
+        "stat_rules_time": "Time Reading Rules",
+        "stat_avg_turn": "Avg Turn Time",
+        "stat_total_battle": "Total Battle Time",
+        "stat_combat_record": "Combat (W/L/R/S)",
+        "stat_loot": "Loot (Gold/Res/Art)",
+        "stat_highlight_fastest": "Fastest Turn",
+        "stat_highlight_slowest": "Longest Turn",
+        "stat_global_header": "Global Stats",
+        "stat_player_header": "Player Stats",
+        "time_fmt_m_s": "{0}m {1}s"
     },
     "cs": {
         "app_title": "H3 Desková Hra<br>Hudební Doprovod",
@@ -158,7 +175,22 @@ const TRANSLATIONS = {
         "msg_defeat": "Porážka",
         "msg_victory": "Vítězství",
         "msg_retreat": "Ústup",
-        "msg_surrender": "Kapitulace"
+        "msg_surrender": "Kapitulace",
+        "btn_view_stats": "Zobrazit statistiky",
+        "btn_export_data": "Exportovat data",
+        "screen_stats_title": "Statistiky mise",
+        "stat_setup_time": "Čas přípravy",
+        "stat_game_time": "Celkový čas hry",
+        "stat_rules_time": "Čas v pravidlech",
+        "stat_avg_turn": "Průměrný tah",
+        "stat_total_battle": "Celkový čas boje",
+        "stat_combat_record": "Boj (V/P/Ú/Vz)",
+        "stat_loot": "Kořist (Zl/Sur/Art)",
+        "stat_highlight_fastest": "Nejrychlejší tah",
+        "stat_highlight_slowest": "Nejdelší tah",
+        "stat_global_header": "Globální statistiky",
+        "stat_player_header": "Statistiky hráče",
+        "time_fmt_m_s": "{0}m {1}s"
     },
     "de": {
         "app_title": "H3 Brettspiel<br>Musik-Begleiter",
@@ -233,7 +265,22 @@ const TRANSLATIONS = {
         "msg_defeat": "Niederlage",
         "msg_victory": "Sieg",
         "msg_retreat": "Rückzug",
-        "msg_surrender": "Kapitulation"
+        "msg_surrender": "Kapitulation",
+        "btn_view_stats": "Statistiken ansehen",
+        "btn_export_data": "Daten exportieren",
+        "screen_stats_title": "Missionsstatistiken",
+        "stat_setup_time": "Aufbauzeit",
+        "stat_game_time": "Gesamtspielzeit",
+        "stat_rules_time": "Regelzeit",
+        "stat_avg_turn": "Ø Zugzeit",
+        "stat_total_battle": "Gesamtkampfzeit",
+        "stat_combat_record": "Kampf (S/N/R/K)",
+        "stat_loot": "Beute (G/R/A)",
+        "stat_highlight_fastest": "Schnellster Zug",
+        "stat_highlight_slowest": "Längster Zug",
+        "stat_global_header": "Globale Statistiken",
+        "stat_player_header": "Spielerstatistik",
+        "time_fmt_m_s": "{0}m {1}s"
     },
     "es": {
         "app_title": "H3 Juego de Mesa<br>Compañero Musical",
@@ -308,7 +355,22 @@ const TRANSLATIONS = {
         "msg_defeat": "Derrota",
         "msg_victory": "Victoria",
         "msg_retreat": "Retirada",
-        "msg_surrender": "Rendición"
+        "msg_surrender": "Rendición",
+        "btn_view_stats": "Ver Estadísticas",
+        "btn_export_data": "Exportar Datos",
+        "screen_stats_title": "Estadísticas de la Misión",
+        "stat_setup_time": "Tiempo de Preparación",
+        "stat_game_time": "Tiempo Total",
+        "stat_rules_time": "Tiempo en Reglas",
+        "stat_avg_turn": "Tiempo Promedio Turno",
+        "stat_total_battle": "Tiempo Total Batalla",
+        "stat_combat_record": "Combate (V/D/R/S)",
+        "stat_loot": "Botín (O/R/A)",
+        "stat_highlight_fastest": "Turno Más Rápido",
+        "stat_highlight_slowest": "Turno Más Largo",
+        "stat_global_header": "Estadísticas Globales",
+        "stat_player_header": "Estadísticas del Jugador",
+        "time_fmt_m_s": "{0}m {1}s"
     },
     "fr": {
         "app_title": "Jeu de Plateau H3<br>Compagnon Musical",
@@ -383,7 +445,22 @@ const TRANSLATIONS = {
         "msg_defeat": "Défaite",
         "msg_victory": "Victoire",
         "msg_retreat": "Retraite",
-        "msg_surrender": "Reddition"
+        "msg_surrender": "Reddition",
+        "btn_view_stats": "Voir Statistiques",
+        "btn_export_data": "Exporter Données",
+        "screen_stats_title": "Statistiques",
+        "stat_setup_time": "Temps d'installation",
+        "stat_game_time": "Temps de jeu total",
+        "stat_rules_time": "Temps lecture règles",
+        "stat_avg_turn": "Moyenne par tour",
+        "stat_total_battle": "Temps total combat",
+        "stat_combat_record": "Combat (V/D/R/A)",
+        "stat_loot": "Butin (Or/Res/Art)",
+        "stat_highlight_fastest": "Tour le plus rapide",
+        "stat_highlight_slowest": "Tour le plus long",
+        "stat_global_header": "Stats Globales",
+        "stat_player_header": "Stats Joueur",
+        "time_fmt_m_s": "{0}m {1}s"
     },
     "he": {
         "app_title": "H3 משחק קופסה<br>ליווי מוזיקלי",
@@ -458,10 +535,24 @@ const TRANSLATIONS = {
         "msg_defeat": "תבוסה",
         "msg_victory": "ניצחון",
         "msg_retreat": "נסיגה",
-        "msg_surrender": "כניעה"
+        "msg_surrender": "כניעה",
+        "btn_view_stats": "צפה בסטטיסטיקה",
+        "btn_export_data": "ייצוא נתונים",
+        "screen_stats_title": "סטטיסטיקת משימה",
+        "stat_setup_time": "זמן הגדרות",
+        "stat_game_time": "זמן משחק כולל",
+        "stat_rules_time": "זמן קריאת חוקים",
+        "stat_avg_turn": "זמן תור ממוצע",
+        "stat_total_battle": "זמן קרבות כולל",
+        "stat_combat_record": "קרבות (נ/ה/ב/כ)",
+        "stat_loot": "שלל (זהב/משאב/ארט)",
+        "stat_highlight_fastest": "תור הכי מהיר",
+        "stat_highlight_slowest": "תור הכי איטי",
+        "stat_global_header": "סטטיסטיקה כללית",
+        "stat_player_header": "סטטיסטיקת שחקן",
+        "time_fmt_m_s": "{0}ד {1}ש"
     },
     "pl": {
-        // --- Titles & Prompts ---
         "app_title": "H3 Board Game<br>Muzyka",
         "click_setup": "Kliknij, aby ustawić",
         "screen_theme_title": "Wybierz motyw misji",
@@ -471,10 +562,8 @@ const TRANSLATIONS = {
         "combat_title_generic": "Walka",
         "rules_title": "Sprawdzanie zasad",
         "victory_title": "Zwycięstwo!",
-        "confirm_msg_default": "Jesteś pewien?",
+        "confirm_msg_default": "Jsteś pewien?",
         "select_theme_title": "Wybierz motyw",
-
-        // --- Buttons / Labels ---
         "btn_good": "Dobro",
         "btn_evil": "Zło",
         "btn_neutral": "Neutralny",
@@ -498,14 +587,10 @@ const TRANSLATIONS = {
         "btn_town": "Miasto",
         "btn_autoplay": "Autoodtwarzanie muzyki",
         "btn_github": "Repozytorium GitHub",
- 
-        // --- Combat Results ---
         "btn_win": "Wygrana",
         "btn_retreat": "Ucieczka",
         "btn_lose": "Przegrana",
         "btn_surrender": "Poddanie",
-
-        // --- Factions ---
         "faction_castle": "Zamek",
         "faction_rampart": "Bastion",
         "faction_tower": "Forteca",
@@ -517,8 +602,6 @@ const TRANSLATIONS = {
         "faction_conflux": "Wrota Żywiołów",
         "faction_cove": "Przystań",
         "faction_factory": "Fabryka",
-
-        // --- Terrains ---
         "terrain_dirt": "Ziemia",
         "terrain_grass": "Trawa",
         "terrain_lava": "Lawa",
@@ -529,8 +612,6 @@ const TRANSLATIONS = {
         "terrain_underground": "Podziemia",
         "terrain_water": "Woda",
         "terrain_wasteland": "Pustkowie",
-
-        // --- Dynamic JS Strings ---
         "default_player_name": "Gracz {0}",
         "turn_title": "Tura gracza {0}",
         "combat_title": "Walka: {0}",
@@ -544,7 +625,22 @@ const TRANSLATIONS = {
         "msg_defeat": "Przegrana",
         "msg_victory": "Zwycięstwo",
         "msg_retreat": "Ucieczka",
-        "msg_surrender": "Poddanie się"
+        "msg_surrender": "Poddanie się",
+        "btn_view_stats": "Zobacz Statystyki",
+        "btn_export_data": "Eksportuj Dane",
+        "screen_stats_title": "Statystyki Misji",
+        "stat_setup_time": "Czas Przygotowania",
+        "stat_game_time": "Całkowity Czas Gry",
+        "stat_rules_time": "Czas Czytania Zasad",
+        "stat_avg_turn": "Średni Czas Tury",
+        "stat_total_battle": "Całkowity Czas Walki",
+        "stat_combat_record": "Walka (W/P/U/Pod)",
+        "stat_loot": "Łupy (Zł/Zas/Art)",
+        "stat_highlight_fastest": "Najszybsza Tura",
+        "stat_highlight_slowest": "Najdłuższa Tura",
+        "stat_global_header": "Statystyki Globalne",
+        "stat_player_header": "Statystyki Gracza",
+        "time_fmt_m_s": "{0}m {1}s"
     },
     "ru": {
         "app_title": "Настольные Герои 3<br>Музыкальный Компаньон",
@@ -619,7 +715,22 @@ const TRANSLATIONS = {
         "msg_defeat": "Поражение",
         "msg_victory": "Победа",
         "msg_retreat": "Отступление",
-        "msg_surrender": "Сдача"
+        "msg_surrender": "Сдача",
+        "btn_view_stats": "Статистика",
+        "btn_export_data": "Экспорт Данных",
+        "screen_stats_title": "Статистика Миссии",
+        "stat_setup_time": "Время подготовки",
+        "stat_game_time": "Общее время игры",
+        "stat_rules_time": "Время в правилах",
+        "stat_avg_turn": "Ср. время хода",
+        "stat_total_battle": "Общее время битв",
+        "stat_combat_record": "Бои (П/П/О/С)",
+        "stat_loot": "Добыча (З/Р/А)",
+        "stat_highlight_fastest": "Самый быстрый ход",
+        "stat_highlight_slowest": "Самый долгий ход",
+        "stat_global_header": "Общая статистика",
+        "stat_player_header": "Статистика игрока",
+        "time_fmt_m_s": "{0}м {1}с"
     },
     "ua": {
         "app_title": "Настільні Герої 3<br>Музичний Супровід",
@@ -694,6 +805,21 @@ const TRANSLATIONS = {
         "msg_defeat": "Поразка",
         "msg_victory": "Перемога",
         "msg_retreat": "Відступ",
-        "msg_surrender": "Здача"
+        "msg_surrender": "Здача",
+        "btn_view_stats": "Статистика",
+        "btn_export_data": "Експорт Даних",
+        "screen_stats_title": "Статистика Місії",
+        "stat_setup_time": "Час підготовки",
+        "stat_game_time": "Загальний час гри",
+        "stat_rules_time": "Час у правилах",
+        "stat_avg_turn": "Сер. час ходу",
+        "stat_total_battle": "Загальний час битв",
+        "stat_combat_record": "Бої (П/П/В/З)",
+        "stat_loot": "Здобич (З/Р/А)",
+        "stat_highlight_fastest": "Найшвидший хід",
+        "stat_highlight_slowest": "Найдовший хід",
+        "stat_global_header": "Загальна статистика",
+        "stat_player_header": "Статистика гравця",
+        "time_fmt_m_s": "{0}хв {1}с"
     }
 };

@@ -136,6 +136,11 @@ const Localization = {
                     }
                 }
             }
+
+            // Stats Update (if needed)
+            if (document.getElementById('screen-stats').style.display !== 'none') {
+                Game.showStats(Game.state.statsViewIndex);
+            }
             
             // Close submenu if open
             const submenu = document.getElementById('lang-submenu');
@@ -207,7 +212,19 @@ const Game = {
         pendingGameOver: null,
         tempPlayerName: "",
         isAutoplay: true,
-        lastTerrain: null
+        lastTerrain: null,
+        statsViewIndex: 0, // Which player stats are we looking at
+
+        // --- STATS SYSTEM STATE ---
+        timerMode: 'setup', // 'setup', 'overworld', 'battle', 'rules', 'paused', 'ended'
+        lastTick: 0,
+        stats: {
+            appLoadedAt: 0,
+            setupTime: 0,
+            gameStartTime: 0,
+            gameEndTime: 0,
+            totalRulesTime: 0
+        }
     },
 
     audio: {
@@ -396,9 +413,58 @@ const Game = {
         loadNext();
     },
 
+    // --- TIMER / STATS LOGIC ---
+
+    commitTime() {
+        if (!this.state.lastTick) return;
+        const now = Date.now();
+        const delta = now - this.state.lastTick;
+        this.state.lastTick = now;
+
+        if (delta <= 0) return;
+
+        const mode = this.state.timerMode;
+        
+        if (mode === 'setup') {
+            this.state.stats.setupTime += delta;
+        } else if (mode === 'rules') {
+            this.state.stats.totalRulesTime += delta;
+        } else {
+            // Player related timers
+            const player = this.state.players[this.state.currentPlayerIndex];
+            if (!player) return;
+
+            if (mode === 'overworld') {
+                player.stats.currentTurnElapsed += delta;
+            } else if (mode === 'battle') {
+                player.stats.totalBattleTime += delta;
+            }
+        }
+    },
+
+    setTimerMode(mode) {
+        // Commit time for previous mode
+        this.commitTime();
+        // Set new mode
+        this.state.timerMode = mode;
+        this.state.lastTick = Date.now();
+    },
+
+    pushTurnStats() {
+        const player = this.state.players[this.state.currentPlayerIndex];
+        if (player) {
+            player.stats.turnHistory.push(player.stats.currentTurnElapsed);
+            player.stats.currentTurnElapsed = 0;
+        }
+    },
+
     // --- GAME LOGIC ---
 
     init() {
+        this.state.lastTick = Date.now();
+        this.state.stats.appLoadedAt = Date.now();
+        this.state.timerMode = 'setup';
+
         document.getElementById('click-overlay').style.display = 'none';
         this.playBg('assets/main.mp3');
         this.showScreen('screen-start');
@@ -527,7 +593,15 @@ const Game = {
                         id: playerIndex, 
                         faction: faction, 
                         name: this.state.tempPlayerName,
-                        eliminated: false 
+                        eliminated: false,
+                        // New Stats Struct
+                        stats: {
+                            turnHistory: [],
+                            currentTurnElapsed: 0,
+                            totalBattleTime: 0,
+                            combat: { wins: 0, losses: 0, retreats: 0, surrenders: 0 },
+                            loot: { gold: 0, valuable: 0, artifact: 0 }
+                        }
                     });
                     this.startFactionSelection(playerIndex + 1);
                 };
@@ -549,6 +623,8 @@ const Game = {
     },
 
     startGame() {
+        this.commitTime(); // Commit setup time
+        this.state.stats.gameStartTime = Date.now();
         this.state.round = 1;
         this.state.currentPlayerIndex = 0;
         this.startTurn(false); 
@@ -559,6 +635,10 @@ const Game = {
             clearTimeout(this.state.musicTimer);
             this.state.musicTimer = null;
         }
+        
+        // Timer Logic
+        this.setTimerMode('overworld');
+
         const player = this.state.players[this.state.currentPlayerIndex];
         
         if (player.eliminated) {
@@ -642,6 +722,10 @@ const Game = {
     },
 
     endTurn() {
+        // Commit turn time
+        this.commitTime();
+        this.pushTurnStats(); // Save duration to array
+
         let nextIndex = this.state.currentPlayerIndex;
         let loopCount = 0;
         let found = false;
@@ -707,6 +791,14 @@ const Game = {
     handleResourceChoice(type) {
         document.getElementById('resource-popup').style.display = 'none';
 
+        // Stats Update
+        const player = this.state.players[this.state.currentPlayerIndex];
+        if (player) {
+            if (type === 'gold') player.stats.loot.gold++;
+            if (type === 'valuable') player.stats.loot.valuable++;
+            if (type === 'artifact') player.stats.loot.artifact++;
+        }
+
         this.audio.ch1.pause();
         this.audio.ch2.pause();
 
@@ -734,6 +826,8 @@ const Game = {
 
     startCombat() {
         this.stopBg();
+        this.setTimerMode('battle'); // Timer Switch
+
         document.getElementById('combat-title').innerText = Localization.get('combat_title', this.state.players[this.state.currentPlayerIndex].name);
 
         let introNum;
@@ -759,24 +853,28 @@ const Game = {
     },
 
     combatVictory() {
+        this.state.players[this.state.currentPlayerIndex].stats.combat.wins++;
         this.stopBg();
         this.showCombatOverlay(Localization.get('msg_victory'), "assets/victory.avif");
         this.playSfx('win_battle.mp3', () => this.returnToOverworld());
     },
 
     combatRetreat() {
+        this.state.players[this.state.currentPlayerIndex].stats.combat.retreats++;
         this.stopBg();
         this.showCombatOverlay(Localization.get('msg_retreat'), "assets/retreat.avif");
         this.playSfx('retreat.mp3', () => this.returnToOverworld());
     },
 
     combatSurrender() {
+        this.state.players[this.state.currentPlayerIndex].stats.combat.surrenders++;
         this.stopBg();
         this.showCombatOverlay(Localization.get('msg_surrender'), "assets/surrender.avif");
         this.playSfx('surrender.mp3', () => this.returnToOverworld());
     },
 
     combatLose() {
+        this.state.players[this.state.currentPlayerIndex].stats.combat.losses++;
         this.stopBg();
         this.showCombatOverlay(Localization.get('msg_defeat'), "assets/eliminated.avif");
         this.playSfx('lose.mp3', () => this.returnToOverworld());
@@ -795,6 +893,7 @@ const Game = {
     },
 
     returnToOverworld() {
+        this.setTimerMode('overworld'); // Timer Switch back
         this.state.trackPositions = {};
         this.audio.sfx.pause();
         this.audio.sfx.onended = null;
@@ -808,7 +907,10 @@ const Game = {
     showRules(fromScreen) {
         this.state.previousScreen = fromScreen;
         this.state.previousMusic = this.audio.currentBgUrl;
+        this.state.previousTimerMode = this.state.timerMode;
         
+        this.setTimerMode('rules'); // Switch to global rules timer
+
         let introNum;
         do {
             introNum = Math.floor(Math.random() * 3) + 1;
@@ -821,6 +923,7 @@ const Game = {
     },
 
     exitRules() {
+        this.setTimerMode(this.state.previousTimerMode); // Restore previous timer mode
         this.showScreen(this.state.previousScreen);
         if (this.state.currentScreen === 'screen-overworld') {
             const shouldLoop = !this.state.isAutoplay;
@@ -850,14 +953,18 @@ const Game = {
         if (isConfirmed) {
             if (action === 'win') {
                 const playerName = this.state.players[this.state.currentPlayerIndex].name;
+                // Set stats view to winner
+                this.state.statsViewIndex = this.state.currentPlayerIndex;
                 this.finishGameSequence('assets/win_game.avif', Localization.get('msg_victory_title', playerName), 'assets/win_game.mp3', true);
             } else if (action === 'lose') {
+                this.state.statsViewIndex = 0; // Default view
                 this.finishGameSequence('assets/lose.avif', Localization.get('msg_defeat'), 'assets/ultimatelose.mp3', false);
             } else if (action === 'eliminate') {
                 const player = this.state.players[this.state.currentPlayerIndex];
                 player.eliminated = true;
                 const activePlayers = this.state.players.filter(p => !p.eliminated);
                 if (activePlayers.length === 0) {
+                    this.state.statsViewIndex = this.state.currentPlayerIndex;
                     this.finishGameSequence('assets/lose.avif', Localization.get('msg_defeat'), 'assets/ultimatelose.mp3', false);
                 } else {
                     this.endTurn();
@@ -867,6 +974,10 @@ const Game = {
     },
 
     finishGameSequence(imgUrl, titleText, audioUrl, loop) {
+        this.commitTime(); // Final time commit
+        this.state.stats.gameEndTime = Date.now();
+        this.state.timerMode = 'ended';
+
         if (this.audio.fadeInterval) clearInterval(this.audio.fadeInterval);
         this.audio.ch1.pause();
         this.audio.ch2.pause();
@@ -895,12 +1006,151 @@ const Game = {
         }
     },
 
+    // --- STATISTICS SCREEN LOGIC ---
+    
+    // Format ms to "Xm Ys"
+    fmtTime(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return Localization.get('time_fmt_m_s', mins, secs);
+    },
+
+    showStats(playerIdx) {
+        // Validation
+        if (playerIdx < 0) playerIdx = this.state.players.length - 1;
+        if (playerIdx >= this.state.players.length) playerIdx = 0;
+        this.state.statsViewIndex = playerIdx;
+
+        const player = this.state.players[playerIdx];
+
+        // 1. Set Background & Header
+        this.updateFactionColor(player.faction);
+        
+        // 2. Global Stats
+        const setupT = this.state.stats.setupTime;
+        const totalGameT = (this.state.stats.gameEndTime || Date.now()) - this.state.stats.gameStartTime;
+        const rulesT = this.state.stats.totalRulesTime;
+
+        document.getElementById('stat-setup').innerText = this.fmtTime(setupT);
+        document.getElementById('stat-game-total').innerText = this.fmtTime(totalGameT);
+        document.getElementById('stat-rules').innerText = this.fmtTime(rulesT);
+
+        // 3. Player Card
+        document.getElementById('stat-p-name').innerText = player.name;
+        document.getElementById('stat-p-faction').innerText = Localization.get(`faction_${player.faction}`);
+        const pImg = document.getElementById('stat-p-img');
+        pImg.style.backgroundImage = `url('assets/${player.faction}.avif')`;
+
+        // Player Time Calcs
+        let totalTurnTime = 0;
+        let fastestTurn = Infinity;
+        let slowestTurn = 0;
+        
+        // Include current partial turn if game not over?
+        // Usually turnHistory holds completed turns. 
+        const turns = player.stats.turnHistory;
+        turns.forEach(t => {
+            totalTurnTime += t;
+            if (t < fastestTurn) fastestTurn = t;
+            if (t > slowestTurn) slowestTurn = t;
+        });
+
+        const avgTurn = turns.length > 0 ? (totalTurnTime / turns.length) : 0;
+        
+        document.getElementById('stat-avg-turn').innerText = this.fmtTime(avgTurn);
+        document.getElementById('stat-battle-total').innerText = this.fmtTime(player.stats.totalBattleTime);
+        
+        // Highlights
+        document.getElementById('stat-fast-turn').innerText = fastestTurn === Infinity ? "-" : this.fmtTime(fastestTurn);
+        document.getElementById('stat-slow-turn').innerText = slowestTurn === 0 ? "-" : this.fmtTime(slowestTurn);
+
+        // Counters
+        const c = player.stats.combat;
+        const l = player.stats.loot;
+        document.getElementById('stat-combat-rec').innerText = `${c.wins} / ${c.losses} / ${c.retreats} / ${c.surrenders}`;
+        document.getElementById('stat-loot-rec').innerText = `${l.gold} / ${l.valuable} / ${l.artifact}`;
+
+        this.showScreen('screen-stats');
+    },
+
+    cycleStatsPlayer(direction) {
+        this.showStats(this.state.statsViewIndex + direction);
+    },
+
+    exportStats() {
+        const now = new Date();
+        const data = {
+            exportDate: now.toLocaleDateString(),
+            exportTime: now.toLocaleTimeString(),
+            rawTimestamp: now.toISOString(),
+            global: {
+                setupTimeMs: this.state.stats.setupTime,
+                totalGameTimeMs: (this.state.stats.gameEndTime || Date.now()) - this.state.stats.gameStartTime,
+                rulesTimeMs: this.state.stats.totalRulesTime
+            },
+            players: this.state.players.map(p => ({
+                name: p.name,
+                faction: p.faction,
+                eliminated: p.eliminated,
+                stats: p.stats
+            }))
+        };
+
+        const jsonStr = JSON.stringify(data, null, 2);
+        const fileName = `${now.toISOString().split('T')[0]}_${now.getHours()}-${now.getMinutes()}_h3data.json`;
+
+        // Check if we are on mobile with share capabilities
+        if (navigator.share && navigator.canShare) {
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const file = new File([blob], fileName, { type: 'application/json' });
+
+            if (navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: 'HoMM3 Statistics',
+                }).catch(() => this.downloadDesktop(jsonStr, fileName));
+                return;
+            }
+        }
+
+        // Default Desktop / Fallback Download
+        this.downloadDesktop(jsonStr, fileName);
+    },
+
+    downloadDesktop(content, fileName) {
+        const blob = new Blob([content], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
+    },
+
     resetGame() {
         this.state.players = [];
         this.state.currentPlayerIndex = 0;
         this.state.round = 1;
         this.state.selectedTheme = null;
         this.state.playerCount = 3;
+        
+        // Reset Stats State
+        this.state.stats = {
+            appLoadedAt: Date.now(),
+            setupTime: 0,
+            gameStartTime: 0,
+            gameEndTime: 0,
+            totalRulesTime: 0
+        };
+        this.state.lastTick = Date.now();
+        this.state.timerMode = 'setup';
+
         document.querySelectorAll('.faction-btn').forEach(btn => btn.classList.remove('disabled'));
         
         this.stopBg(true); 
