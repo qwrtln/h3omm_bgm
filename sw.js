@@ -1,4 +1,4 @@
-const CACHE_NAME = `h3omm3_core_1.8.0`
+const CACHE_NAME = `h3omm3_core_1.8.1`
 
 // Core assets required for immediate UI rendering
 const CORE_ASSETS = [
@@ -57,7 +57,14 @@ const CORE_ASSETS = [
 self.addEventListener('install', (e) => {
     e.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll(CORE_ASSETS);
+            const cachePromises = CORE_ASSETS.map(url => {
+                // If one fails, we catch the error so the main process doesn't stop.
+                return cache.add(url).catch(error => {
+                    console.warn(`Failed to cache: ${url}`, error);
+                });
+            });
+            // Promise.allSettled waits for all downloads to finish (success or fail)
+            return Promise.allSettled(cachePromises);
         })
     );
     self.skipWaiting();
@@ -67,7 +74,17 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(
         caches.match(e.request).then(response => {
             if (response) return response;
-            return fetch(e.request);
+            // If not in cache, fetch from network AND cache it for next time
+            return fetch(e.request).then(networkResponse => {
+                if(!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+                    return networkResponse;
+                }
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(e.request, responseToCache);
+                });
+                return networkResponse;
+            });
         })
     );
 });
