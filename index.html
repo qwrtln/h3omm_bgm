@@ -339,6 +339,36 @@
         #lang-submenu { width: 100%; box-sizing: border-box; }
     }
 
+    /* --- TIMELINE STYLES --- */
+    #timeline-overlay {
+        position: fixed; inset: 0; z-index: 20000; background: rgba(0,0,0,0.95);
+        display: none; flex-direction: column; align-items: center; overflow-y: scroll;
+        scroll-behavior: smooth;
+    }
+    .timeline-title-bar {
+        position: fixed; top: 0; left: 0; width: 100%; background: #111; border-bottom: 2px solid var(--gold-color);
+        padding: 15px; text-align: center; z-index: 20001; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;
+    }
+    .timeline-close { font-size: 2rem; cursor: pointer; color: white; }
+    #timeline-container {
+        position: relative; width: 100%; max-width: 600px; margin-top: 80px; margin-bottom: 50px; min-height: 100%;
+        display: flex; justify-content: center;
+    }
+    #timeline-content {
+        position: relative; width: 100%; /* Height set dynamically */
+    }
+    .t-bar { position: absolute; left: 50%; width: 6px; transform: translateX(-3px); }
+    .t-node { position: absolute; width: 40px; height: 40px; background-size: cover; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px black; background-color: #333; }
+    .t-center { left: 50%; transform: translate(-50%, 50%); z-index: 5; }
+    .t-small { width: 24px; height: 24px; border: 1px solid #ccc; }
+    .t-large { width: 60px; height: 60px; border: 3px solid gold; }
+    .t-leaf { top: auto; z-index: 4; }
+    .t-left { left: 50%; transform: translate(-150%, 50%); }
+    .t-right { left: 50%; transform: translate(50%, 50%); }
+    .t-battle-bracket { 
+        position: absolute; left: 50%; width: 40px; border: 2px solid #a00; border-left: none; 
+        transform: translateX(0); z-index: 2; 
+    }
   </style>
 </head>
 <body>
@@ -562,19 +592,15 @@
   </div>
 
   <!-- SCREEN 8: Statistics -->
-  <div id="screen-stats" class="screen">
+   <div id="screen-stats" class="screen">
       <h1 data-i18n="screen_stats_title">Mission Stats</h1>
-      
       <div class="stats-container">
-          <!-- Global Section -->
           <h2 style="font-size: 1rem; border-bottom: 1px solid white;" data-i18n="stat_global_header">Global</h2>
           <table class="stats-table">
               <tr><th data-i18n="stat_setup_time">Setup Time</th><td id="stat-setup">0m 0s</td></tr>
               <tr><th data-i18n="stat_game_time">Total Time</th><td id="stat-game-total">0m 0s</td></tr>
               <tr><th data-i18n="stat_rules_time">Rules Time</th><td id="stat-rules">0m 0s</td></tr>
           </table>
-
-          <!-- Player Section -->
           <h2 style="font-size: 1rem; border-bottom: 1px solid white;" data-i18n="stat_player_header">Player</h2>
           <div class="stat-card-header">
               <div id="stat-p-img" class="stat-faction-icon"></div>
@@ -583,7 +609,6 @@
                   <span id="stat-p-faction" class="stat-player-faction">Castle</span>
               </div>
           </div>
-
           <table class="stats-table">
               <tr><th data-i18n="stat_avg_turn">Avg Turn</th><td id="stat-avg-turn">0m 0s</td></tr>
               <tr><th data-i18n="stat_total_battle">Battle Time</th><td id="stat-battle-total">0m 0s</td></tr>
@@ -592,22 +617,25 @@
               <tr><th><span data-i18n="stat_loot">Loot</span> (<span class="stat-icon btn-gold"></span>/<span class="stat-icon btn-valuable"></span>/<span class="stat-icon btn-artifact"></span>)</th>
                   <td id="stat-loot-rec">0 / 0 / 0</td></tr>
           </table>
-
           <table class="stats-table" style="margin-top: 10px;">
               <tr><th data-i18n="stat_highlight_fastest">Fastest Turn</th><td id="stat-fast-turn" style="color:#7fff7f;">-</td></tr>
               <tr><th data-i18n="stat_highlight_slowest">Longest Turn</th><td id="stat-slow-turn" style="color:#ff7f7f;">-</td></tr>
           </table>
-
           <div class="stats-nav">
               <div class="nav-arrow" onclick="Game.cycleStatsPlayer(-1)">&lt;</div>
               <button class="export-btn" data-i18n="btn_export_data" onclick="Game.exportStats()">Export Data</button>
               <div class="nav-arrow" onclick="Game.cycleStatsPlayer(1)">&gt;</div>
           </div>
       </div>
-
-      <div class="btn-wrapper" style="margin-top: 10px;">
-          <span class="btn-label" data-i18n="btn_back">Back</span>
-          <div class="btn btn-rules" onclick="Game.showScreen('screen-win')"></div>
+      <div class="horizontal-action-row" style="margin-top: 10px;">
+          <div class="btn-wrapper">
+              <span class="btn-label" data-i18n="btn_timeline">Timeline</span>
+              <div class="btn btn-endturn" onclick="Game.showTimeline()"></div>
+          </div>
+          <div class="btn-wrapper">
+              <span class="btn-label" data-i18n="btn_back">Back</span>
+              <div class="btn btn-rules" onclick="Game.showScreen('screen-win')"></div>
+          </div>
       </div>
   </div>
 
@@ -626,6 +654,17 @@
       </div>
   </div>
 
+  <!-- TIMELINE OVERLAY -->
+  <div id="timeline-overlay">
+      <div class="timeline-title-bar">
+          <h2 data-i18n="timeline_title">Timeline</h2>
+          <div class="timeline-close" onclick="Game.hideTimeline()">✖</div>
+      </div>
+      <div id="timeline-container">
+          <div id="timeline-content"></div>
+      </div>
+  </div>
+
   <!-- OPTIONS MENU: Toggle Button (Mobile) -->
   <div id="options-btn" onclick="Game.toggleOptionsMenu()">⚙️</div>
 
@@ -633,26 +672,18 @@
   <div id="options-menu">
       <div class="vol-wrapper">
           <div id="mute-btn" onclick="Game.toggleMute()">🔊</div>
-          <div class="slider-container">
-              <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" oninput="Game.setVolume(this.value)">
-          </div>
+          <div class="slider-container"><input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" oninput="Game.setVolume(this.value)"></div>
       </div>
-
-      <!-- Language Toggle -->
       <div class="lang-wrapper">
-        <div id="lang-btn" onclick="Game.toggleLanguageMenu()">
-            <span id="current-lang-icon">🌐</span>
-        </div>
-        <div id="lang-submenu">
-            <!-- Populated by JS -->
-        </div>
+        <div id="lang-btn" onclick="Game.toggleLanguageMenu()"><span id="current-lang-icon">🌐</span></div>
+        <div id="lang-submenu"></div>
       </div>
-
       <div class="autoplay-container">
           <span class="autoplay-label" data-i18n="btn_autoplay">Autoplay Overworld Music</span>
           <div id="autoplay-toggle" class="toggle-btn active" onclick="Game.toggleAutoplay()"></div>
       </div>
-
+      <button id="pwa-install-btn" class="pwa-btn" data-i18n="btn_install">Install App</button>
+      <button class="pwa-btn" data-i18n="btn_update" onclick="Game.forceUpdate()">Force Update</button>
       <a href="https://github.com/exevirus/h3omm_bgm" target="_blank" class="github-link" data-i18n="btn_github">App Github Repository</a>
   </div>
 

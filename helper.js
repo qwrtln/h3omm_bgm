@@ -78,6 +78,8 @@ const LANG_FLAGS = {
     'ua': '🇺🇦'
 };
 
+let deferredInstallPrompt = null;
+
 const Localization = {
     lang: 'en', // Default
 
@@ -469,6 +471,35 @@ const Game = {
 
         this.audio.ch1.onended = () => this.handleAudioEnd();
         this.audio.ch2.onended = () => this.handleAudioEnd();
+    },
+
+    updatePWAButtons() {
+        const installBtn = document.getElementById('pwa-install-btn');
+        if (deferredInstallPrompt) {
+            installBtn.style.display = 'block';
+            installBtn.onclick = () => {
+                deferredInstallPrompt.prompt();
+                deferredInstallPrompt.userChoice.then((choice) => {
+                    if (choice.outcome === 'accepted') {
+                        installBtn.style.display = 'none';
+                    }
+                    deferredInstallPrompt = null;
+                });
+            };
+        } else {
+            installBtn.style.display = 'none';
+        }
+    },
+
+    forceUpdate() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                for(let reg of regs) reg.unregister();
+                window.location.reload();
+            });
+        } else {
+            window.location.reload();
+        }
     },
 
     toggleOptionsMenu() {
@@ -1254,8 +1285,172 @@ const Game = {
         document.querySelectorAll('.screen').forEach(el => el.style.display = 'none');
         document.getElementById(id).style.display = 'flex';
         this.state.currentScreen = id;
+    },
+
+    // --- TIMELINE VISUALIZATION ---
+    showTimeline() {
+        const overlay = document.getElementById('timeline-overlay');
+        const content = document.getElementById('timeline-content');
+        content.innerHTML = '';
+        overlay.style.display = 'flex';
+        
+        const history = this.state.history;
+        if (!history || history.length === 0) return;
+
+        // 1. Calculate Start Time including Setup
+        const firstEv = history[0];
+        // Ensure we handle setup time if present to draw the "pre-game" line
+        const setupDuration = (firstEv.type === 'GAME_START' && firstEv.data.setupTime) ? firstEv.data.setupTime : 0;
+        const absoluteStart = firstEv.timestamp - setupDuration; // This defines T=0 at the very bottom
+        
+        // Calculate average turn time for scaling distance
+        let totalTurnMs = 0;
+        let turnCount = 0;
+        history.forEach(ev => { if (ev.type === 'TURN_END' && ev.data.duration) { totalTurnMs += ev.data.duration; turnCount++; }});
+        const avgTurnMs = turnCount > 0 ? (totalTurnMs / turnCount) : 30000;
+        const pxPerMs = 120 / (avgTurnMs || 30000); 
+
+        // Helper to create nodes
+        const createNode = (y, imgUrl, className = '', customStyle = '') => {
+            const node = document.createElement('div');
+            node.className = `t-node ${className}`;
+            node.style.bottom = `${y}px`;
+            node.style.backgroundImage = `url('${imgUrl}')`;
+            if (customStyle) node.style.cssText += customStyle;
+            content.appendChild(node);
+        };
+
+        const createBar = (startY, endY, color) => {
+            if (endY <= startY) return;
+            const bar = document.createElement('div');
+            bar.className = 't-bar';
+            bar.style.bottom = `${startY}px`;
+            bar.style.height = `${endY - startY}px`;
+            bar.style.backgroundColor = color;
+            content.appendChild(bar);
+        };
+
+        let lastY = 0;
+        let maxY = 0;
+        let lastColor = '#999'; // Default grey for setup phase
+        let battleStartY = null;
+
+        // 2. Draw Setup Phase Line (Grey/White)
+        if (setupDuration > 0) {
+            const setupEndY = setupDuration * pxPerMs;
+            createBar(0, setupEndY, '#ccc'); // The non-colored setup line
+            lastY = setupEndY;
+        }
+
+        history.forEach(ev => {
+            const t = ev.timestamp - absoluteStart;
+            const y = t * pxPerMs;
+            
+            if (y > maxY) maxY = y;
+
+            // Draw segment from lastY to current Y
+            if (y > lastY) {
+                createBar(lastY, y, lastColor);
+            }
+
+            if (ev.type === 'GAME_START') {
+                createNode(y, 'assets/start.avif', 't-center t-large'); 
+            } 
+            else if (ev.type === 'TURN_START') {
+                if (ev.faction) lastColor = FACTION_COLORS[ev.faction] || '#555';
+            }
+            else if (ev.type === 'ROUND_START') {
+                const isMonth = ev.data.roundType === 'new_month';
+                const isWeek = ev.data.roundType === 'new_week';
+                const img = (isMonth || isWeek) ? 'assets/newtime.avif' : 'assets/newday.avif';
+                createNode(y, img, 't-center t-small');
+            }
+            else if (ev.type === 'PICKUP') {
+                const type = ev.data.type;
+                const img = type === 'gold' ? 'assets/gold.avif' : (type === 'artifact' ? 'assets/artifact.avif' : 'assets/valuable.avif');
+                
+                // Offsets: Gold (Farthest Left), Valuable (Mid), Artifact (Inner)
+                let multiplier = 200; // Base 300% (Artifact)
+                if (type === 'gold') multiplier = 400;
+                else if (type === 'valuable') multiplier = 300;
+
+                // 1. Create Horizontal Line connecting node to timeline
+                // Since translate % is relative to the node width (40px), 100% = 40px.
+                const pixelOffset = (multiplier / 100) * 40; 
+                
+                const hLine = document.createElement('div');
+                hLine.style.cssText = `
+                    position: absolute;
+                    left: 50%;
+                    bottom: ${y}px;
+                    width: ${pixelOffset}px;
+                    height: 2px;
+                    background-color: ${lastColor};
+                    transform: translateX(-100%); /* Grow to the left from center */
+                    z-index: 3;
+                `;
+                content.appendChild(hLine);
+
+                // 2. Create Node on the Left
+                // translate(-X%, 50%) -> Negative X moves left. Positive Y (50%) moves "down" relative to bottom anchor.
+                createNode(y, img, 't-leaf', `left: 50%; bottom: ${y}px; transform: translate(-${multiplier}%, 50%);`);
+            }
+            else if (ev.type === 'BATTLE_START') {
+                battleStartY = y;
+            }
+            else if (ev.type === 'BATTLE_END') {
+                if (battleStartY !== null) {
+                    const h = y - battleStartY;
+                    const visualH = Math.max(h, 20); 
+                    const mid = battleStartY + (visualH/2);
+                    
+                    const res = ev.data.result;
+                    let img = 'assets/victory.avif';
+                    if (res === 'loss') img = 'assets/eliminated.avif';
+                    else if (res === 'retreat') img = 'assets/retreat.avif';
+                    else if (res === 'surrender') img = 'assets/surrender.avif';
+                    
+                    const bracket = document.createElement('div');
+                    bracket.className = 't-battle-bracket';
+                    bracket.style.bottom = `${battleStartY}px`;
+                    bracket.style.height = `${visualH}px`;
+                    content.appendChild(bracket);
+
+                    createNode(mid, img, 't-leaf t-right');
+                    battleStartY = null;
+                }
+            }
+            else if (ev.type === 'ELIMINATED') {
+                // Right side, further out than battle, 20% larger (scale 1.2)
+                createNode(y, 'assets/eliminated.avif', 't-leaf', `left: 50%; bottom: ${y}px; transform: translate(200%, 50%) scale(1.2);`);
+            }
+            else if (ev.type === 'GAME_END') {
+                const winner = ev.data.winner || "";
+                const img = winner.includes('Defeat') ? 'assets/lose.avif' : 'assets/win_game.avif';
+                createNode(y, img, 't-center t-large');
+            }
+
+            lastY = y;
+        });
+
+        content.style.height = `${maxY + 150}px`;
+        
+        // Scroll to the bottom (Start of Timeline)
+        setTimeout(() => { 
+            overlay.scrollTop = overlay.scrollHeight; 
+        }, 10);
+    },
+
+    hideTimeline() {
+        document.getElementById('timeline-overlay').style.display = 'none';
     }
 };
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (Game && Game.updatePWAButtons) Game.updatePWAButtons();
+});
 
 window.addEventListener('DOMContentLoaded', () => {
     Localization.init();

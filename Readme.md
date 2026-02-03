@@ -1,9 +1,14 @@
-### [Go to App](https://exevirus.github.io/h3omm_bgm)
+<div align="center">
+<h1>Heroes of Might & Magic III: The Board Game<br>Music Companion<br><a href="https://exevirus.github.io/h3omm_bgm">(Link to App)</h1></a>
+
+<p align="center">
+<a href="https://discord.gg/Y4uM9pPWF6"><img src="https://dcbadge.limes.pink/api/server/Y4uM9pPWF6"></a>
+</p>
 
 ### To work on this locally:
 
-1. Clone this repository or hit that "Code" buitton and then download .zip
-2. Once cloned/unzipped, open index.html in any browser and it's now all running locally.
+    1. Clone this repository or hit that "Code" buitton and then download .zip
+    2. Once cloned/unzipped, open index.html in any browser and it's now all running locally.
 
 ### Q/A:
 #### 1. Wait, is it just index.html?
@@ -28,5 +33,12 @@
 
 #### 6. Is there other cool stuff?
 
-> *ALWAYS*: recommend starting with the [community rulebook](https://github.com/Heegu-sama/Homm3BG)
+> Absolutely! I recommend starting with the [community rulebook](https://github.com/Heegu-sama/Homm3BG)
+>
+> And there's stats tracking/export and a timeline feature, built in!
+
+![Mission Stats and Timeline](demo.avif)
+</div>
+
+
 
