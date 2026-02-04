@@ -79,8 +79,6 @@ const LANG_FLAGS = {
 };
 
 let deferredInstallPrompt = null;
-let globalLastBgEventOverlayUrl = null;
-let gifToggleState = 0;
 
 const Localization = {
     lang: 'en', // Default
@@ -816,8 +814,7 @@ const Game = {
         const eventText = document.getElementById('event-text');
 
         if (currentOl) {
-            gifToggleState = 1 - gifToggleState;
-            const uniqueUrl = `${image}?v=${gifToggleState}`;
+            const uniqueUrl = `${image}?v=${Date.now()}`;
             currentOl.style.backgroundImage = 'none';
             void currentOl.offsetWidth;
             currentOl.style.backgroundImage = `url('${uniqueUrl}')`;

@@ -1,4 +1,4 @@
-const CACHE_NAME = `h3omm3_core_1.8.4`
+const CACHE_NAME = `h3omm3_core_1.8.5`
 
 // Core assets required for immediate UI rendering
 const CORE_ASSETS = [
@@ -72,9 +72,8 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('fetch', (e) => {
     e.respondWith(
-        caches.match(e.request).then(response => {
+        caches.match(e.request, { ignoreSearch: true }).then(response => {
             if (response) return response;
-            // If not in cache, fetch from network AND cache it for next time
             return fetch(e.request).then(networkResponse => {
                 if(!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
                     return networkResponse;
