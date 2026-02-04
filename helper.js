@@ -32,7 +32,7 @@ const ASSET_QUEUE = [
     'assets/battle5.mp3', 'assets/battle6.mp3', 'assets/battle7.mp3', 'assets/battle8.mp3',
     'assets/combat1.mp3', 'assets/combat2.mp3', 'assets/combat3.mp3', 'assets/combat4.mp3',
     'assets/ai1.mp3', 'assets/ai2.mp3', 'assets/ai3.mp3',
-    'assets/gold.avif', 'assets/valuable.avif',
+    'assets/treasure.svg', 'assets/valuables.svg',
     'assets/artifact.mp3',
     'assets/newday.mp3', 'assets/newweek.mp3', 'assets/newmonth.mp3',
     'assets/win_battle.mp3', 
@@ -56,8 +56,8 @@ const ASSET_QUEUE = [
     'assets/inferno.avif', 'assets/dungeon.avif', 'assets/necropolis.avif',
     'assets/fortress.avif', 'assets/stronghold.avif',
     'assets/conflux.avif', 'assets/cove.avif', 'assets/factory.avif',
-    'assets/newday.avif', 'assets/newtime.avif','./assets/tile.avif',
-    'assets/start.avif', 'assets/resource.avif', 'assets/artifact.avif', 
+    'assets/newday.gif', 'assets/newtime.gif','./assets/tile.avif',
+    'assets/start.avif', 'assets/resource.avif', 'assets/artifact.svg', 
     'assets/end_turn.avif', 'assets/rules.avif', 'assets/win_game.avif',
     'assets/victory.avif', 'assets/retreat.avif', 'assets/lose.avif', 'assets/eliminated.avif', 'assets/surrender.avif',
     // Terrains
@@ -79,6 +79,8 @@ const LANG_FLAGS = {
 };
 
 let deferredInstallPrompt = null;
+let globalLastBgEventOverlayUrl = null;
+let gifToggleState = 0;
 
 const Localization = {
     lang: 'en', // Default
@@ -422,6 +424,8 @@ const Game = {
         }
 
         this.audio.sfx.play().catch(e => {
+            this.audio.sfx.onended = null;
+            this.audio.sfx.onerror = null;
             if(onComplete) onComplete();
         });
     },
@@ -790,7 +794,7 @@ const Game = {
 
         let sfxToPlay = 'newday.mp3';
         let overlayText = Localization.get('event_new_day');
-        let image = "url('assets/newday.avif')";
+        let image = "assets/newday.gif";
         let roundType = 'new_day';
 
         if (isNewRound) {
@@ -803,15 +807,26 @@ const Game = {
                 overlayText = Localization.get('event_resource_round');
                 roundType = 'new_week';
             }
-            image = "url('assets/newtime.avif')";
+            image = "assets/newtime.gif";
         }
 
         this.stopBg(true);
 
-        const ol = document.getElementById('event-overlay');
-        ol.style.backgroundImage = image;
-        document.getElementById('event-text').innerHTML = overlayText;
-        ol.style.display = 'flex';
+        const currentOl = document.getElementById('event-overlay');
+        const eventText = document.getElementById('event-text');
+
+        if (currentOl) {
+            gifToggleState = 1 - gifToggleState;
+            const uniqueUrl = `${image}?v=${gifToggleState}`;
+            currentOl.style.backgroundImage = 'none';
+            void currentOl.offsetWidth;
+            currentOl.style.backgroundImage = `url('${uniqueUrl}')`;
+            currentOl.style.display = 'flex';
+        }
+
+        if (eventText) {
+            eventText.innerHTML = overlayText;
+        }
         
         if (isNewRound) {
             this.logEvent('ROUND_START', { roundType: roundType, newRoundNumber: nextRound });
@@ -819,10 +834,12 @@ const Game = {
 
         // Define the transition logic
         const proceed = () => {
-            document.getElementById('event-overlay').style.display = 'none';
+            const overlay = document.getElementById('event-overlay');
+            if (overlay) overlay.style.display = 'none';
             this.state.currentPlayerIndex = nextIndex;
             this.state.round = nextRound;
             this.startTurn(true, 0);
+            this.state.eventCallback = null;
         };
 
         this.state.eventCallback = proceed;
@@ -1362,7 +1379,7 @@ const Game = {
             else if (ev.type === 'ROUND_START') {
                 const isMonth = ev.data.roundType === 'new_month';
                 const isWeek = ev.data.roundType === 'new_week';
-                const img = (isMonth || isWeek) ? 'assets/newtime.avif' : 'assets/newday.avif';
+                const img = (isMonth || isWeek) ? 'assets/newtime.gif' : 'assets/newday.gif';
                 createNode(y, img, 't-center t-small');
             }
             else if (ev.type === 'PICKUP') {

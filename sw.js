@@ -1,4 +1,4 @@
-const CACHE_NAME = `h3omm3_core_1.8.2`
+const CACHE_NAME = `h3omm3_core_1.8.3`
 
 // Core assets required for immediate UI rendering
 const CORE_ASSETS = [
@@ -18,9 +18,9 @@ const CORE_ASSETS = [
     './assets/inferno.avif', './assets/dungeon.avif', './assets/necropolis.avif',
     './assets/fortress.avif', './assets/stronghold.avif',
     './assets/conflux.avif', './assets/cove.avif', './assets/factory.avif',
-    './assets/newday.avif', './assets/newtime.avif','./assets/tile.avif',
-    './assets/gold.avif', './assets/valuable.avif',
-    './assets/start.avif', './assets/resource.avif', './assets/artifact.avif', 
+    './assets/newday.gif', './assets/newtime.gif','./assets/tile.avif',
+    './assets/treasure.svg', './assets/valuables.svg',
+    './assets/start.avif', './assets/resource.avif', './assets/artifact.svg', 
     './assets/end_turn.avif', './assets/rules.avif', './assets/win_game.avif',
     './assets/victory.avif', './assets/retreat.avif', './assets/lose.avif', './assets/surrender.avif', './assets/eliminated.avif',
     './assets/dirt.avif', './assets/grass.avif', './assets/lava.avif', './assets/rough.avif',
