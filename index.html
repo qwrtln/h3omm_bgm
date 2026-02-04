@@ -119,9 +119,9 @@
     .btn-wasteland { background-image: url('assets/wasteland.avif'); }
     .btn-start { background-image: url('assets/start.avif'); }
     .btn-resource { background-image: url('assets/resource.avif'); }
-    .btn-valuable { background-image: url('assets/valuable.avif'); }
-    .btn-gold { background-image: url('assets/gold.avif'); }
-    .btn-artifact { background-image: url('assets/artifact.avif'); }
+    .btn-valuable { background-image: url('assets/valuables.svg'); background-size: contain; background-repeat: no-repeat; background-position: center; }
+    .btn-gold { background-image: url('assets/treasure.svg'); background-size: contain; background-repeat: no-repeat; background-position: center; }
+    .btn-artifact { background-image: url('assets/artifact.svg');  background-size: contain; background-repeat: no-repeat; background-position: center; }
     .btn-endturn { background-image: url('assets/end_turn.avif'); }
     .btn-rules { background-image: url('assets/rules.avif'); }
     .btn-wingame { background-image: url('assets/win_game.avif'); }
@@ -152,7 +152,7 @@
     .stats-nav { 
         display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 5px; padding-top: 5px; border-top: 1px solid #444;
     }
-    .stat-icon { display: inline-block; width: 3.8em; height: 2.5em; vertical-align: text-bottom; background-size: cover; background-position: center; border: 1px solid rgba(255, 215, 0, 0.4); border-radius: 2px; margin: 0 1px; }
+    .stat-icon { display: inline-block; width: 1.5em; height: 1.5em; vertical-align: text-bottom; background-position: center; margin: 0 1px; }
     .nav-arrow { font-size: 1.8rem; cursor: pointer; color: var(--gold-color); user-select: none; padding: 0 15px; }
     .nav-arrow:active { transform: scale(0.9); }
     .export-btn { 
@@ -340,35 +340,22 @@
     }
 
     /* --- TIMELINE STYLES --- */
-    #timeline-overlay {
-        position: fixed; inset: 0; z-index: 20000; background: rgba(0,0,0,0.95);
-        display: none; flex-direction: column; align-items: center; overflow-y: scroll;
-        scroll-behavior: smooth;
-    }
-    .timeline-title-bar {
-        position: fixed; top: 0; left: 0; width: 100%; background: #111; border-bottom: 2px solid var(--gold-color);
-        padding: 15px; text-align: center; z-index: 20001; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;
+    #timeline-overlay { position: fixed; inset: 0; z-index: 20000; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; overflow-y: scroll; scroll-behavior: smooth; }
+    .timeline-title-bar { position: fixed; top: 0; left: 0; width: 100%; background: #111; border-bottom: 2px solid var(--gold-color);
+        padding: 15px; text-align: center; z-index: 20001; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; 
     }
     .timeline-close { font-size: 2rem; cursor: pointer; color: white; }
-    #timeline-container {
-        position: relative; width: 100%; max-width: 600px; margin-top: 80px; margin-bottom: 50px; min-height: 100%;
-        display: flex; justify-content: center;
-    }
-    #timeline-content {
-        position: relative; width: 100%; /* Height set dynamically */
-    }
+    #timeline-container { position: relative; width: 100%; max-width: 600px; margin-top: 80px; margin-bottom: 50px; min-height: 100%; display: flex; justify-content: center; }
+    #timeline-content { position: relative; width: 100%; }
     .t-bar { position: absolute; left: 50%; width: 6px; transform: translateX(-3px); }
-    .t-node { position: absolute; width: 40px; height: 40px; background-size: cover; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px black; background-color: #333; }
-    .t-center { left: 50%; transform: translate(-50%, 50%); z-index: 5; }
-    .t-small { width: 24px; height: 24px; border: 1px solid #ccc; }
-    .t-large { width: 60px; height: 60px; border: 3px solid gold; }
-    .t-leaf { top: auto; z-index: 4; }
-    .t-left { left: 50%; transform: translate(-150%, 50%); }
-    .t-right { left: 50%; transform: translate(50%, 50%); }
-    .t-battle-bracket { 
-        position: absolute; left: 50%; width: 40px; border: 2px solid #a00; border-left: none; 
-        transform: translateX(0); z-index: 2; 
-    }
+    .t-node { position: absolute; width: 40px; height: 40px; background-size: contain; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px black; background-color: #333; background-repeat: no-repeat; background-position: center; }
+    .t-center { left: 50%; transform: translate(-50%, 50%); z-index: 5; background-size: contain; background-repeat: no-repeat; background-position: center; }
+    .t-small { width: 24px; height: 24px; border: 1px solid #ccc; background-size: contain; background-repeat: no-repeat; background-position: center; }
+    .t-large { width: 60px; height: 60px; border: 3px solid gold; background-size: contain; background-repeat: no-repeat; background-position: center; }
+    .t-leaf { top: auto; z-index: 4; background-size: contain; background-repeat: no-repeat; background-position: center; }
+    .t-left { left: 50%; transform: translate(-150%, 50%); background-size: contain; background-repeat: no-repeat; background-position: center; }
+    .t-right { left: 50%; transform: translate(50%, 50%); background-size: contain; background-repeat: no-repeat; background-position: center; }
+    .t-battle-bracket { position: absolute; left: 50%; width: 40px; border: 2px solid #a00; border-left: none; transform: translateX(0); z-index: 2; }
   </style>
 </head>
 <body>
@@ -612,7 +599,7 @@
           <table class="stats-table">
               <tr><th data-i18n="stat_avg_turn">Avg Turn</th><td id="stat-avg-turn">0m 0s</td></tr>
               <tr><th data-i18n="stat_total_battle">Battle Time</th><td id="stat-battle-total">0m 0s</td></tr>
-              <tr><th><span data-i18n="stat_combat_record">Combat</span> (<span class="stat-icon btn-victory"></span>/<span class="stat-icon btn-lose"></span>/<span class="stat-icon btn-retreat"></span>/<span class="stat-icon btn-surrender"></span>)</th>
+              <tr><th><span data-i18n="stat_combat_record">Combat</span> (<span data-i18n="btn_win">Win</span>/<span data-i18n="btn_retreat">Retreat</span>/<span data-i18n="btn_lose">Lose</span>/<span data-i18n="btn_surrender">Surrender</span>)</th>
                   <td id="stat-combat-rec">0 / 0 / 0 / 0</td></tr>
               <tr><th><span data-i18n="stat_loot">Loot</span> (<span class="stat-icon btn-gold"></span>/<span class="stat-icon btn-valuable"></span>/<span class="stat-icon btn-artifact"></span>)</th>
                   <td id="stat-loot-rec">0 / 0 / 0</td></tr>

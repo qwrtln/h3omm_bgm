@@ -1367,7 +1367,7 @@ const Game = {
             }
             else if (ev.type === 'PICKUP') {
                 const type = ev.data.type;
-                const img = type === 'gold' ? 'assets/gold.avif' : (type === 'artifact' ? 'assets/artifact.avif' : 'assets/valuable.avif');
+                const img = type === 'gold' ? 'assets/treasure.svg' : (type === 'artifact' ? 'assets/artifact.svg' : 'assets/valuables.svg');
                 
                 // Offsets: Gold (Farthest Left), Valuable (Mid), Artifact (Inner)
                 let multiplier = 200; // Base 300% (Artifact)
