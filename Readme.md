@@ -1,16 +1,15 @@
 <div align="center">
-<h1>Heroes of Might & Magic III: The Board Game<br>Music Companion<br><a href="https://exevirus.github.io/h3omm_bgm">(Link to App)</h1></a>
+<h1>Heroes of Might & Magic III: The Board Game<br>Music Companion</h1></a>
+<p align="center"><a href="https://discord.gg/Y4uM9pPWF6"><img src="https://dcbadge.limes.pink/api/server/Y4uM9pPWF6"></a></p>
+<h1><a href="https://exevirus.github.io/h3omm_bgm">👉 GO TO THE APP 👈</a></h1>
+</div>
 
-<p align="center">
-<a href="https://discord.gg/Y4uM9pPWF6"><img src="https://dcbadge.limes.pink/api/server/Y4uM9pPWF6"></a>
-</p>
-
-### To work on this locally:
+## 🔨 To work on this locally:
 
     1. Clone this repository or hit that "Code" buitton and then download .zip
     2. Once cloned/unzipped, open index.html in any browser and it's now all running locally.
 
-### Q/A:
+## ❓ Q/A:
 #### 1. Wait, is it just index.html?
 
 > Yep, index.html is the "root" of a website. a PWA is just a website that is cached locally to your desktop/mobile phone. Github pages let's me "host" this repo as a website with https, which is the only real requirement for a PWA. Any web server could host these files and make it a PWA if you set up https.
@@ -31,14 +30,20 @@
 
 > Yeah probably, make an [issue](https://github.com/ExeVirus/h3omm_bgm/issues), but you'll need a github account, sorry!
 
-#### 6. Is there other cool stuff?
+#### 6. Can you add stats tracking?
 
-> Absolutely! I recommend starting with the [community rulebook](https://github.com/Heegu-sama/Homm3BG)
->
-> And there's stats tracking/export and a timeline feature, built in!
+> Way ahead of you, play normally and then check out the win/lose screen for the mission:
 
 ![Mission Stats and Timeline](demo.avif)
-</div>
+
+## 🛡️ Other Community Projects
+
+- [Rulebook Rewrite Project](https://github.com/Heegu-sama/Homm3BG)
+- [Fan-Made Mission Book](https://github.com/qwrtln/Homm3BG-mission-book)
+- [Game Wiki](https://github.com/Mirzipan/Homm3_BG_Database)
+- [Factory Rule Book](https://github.com/piotrbruzda/Homm3BG-FactoryRulebook)
+- [Scenario Map Editor](https://github.com/zedero/HoMM3Boardgame)
+- [Hero Creator](https://github.com/K-Adam/Homm3_hero_creator)
 
 
 
